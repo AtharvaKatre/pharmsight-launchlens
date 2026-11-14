@@ -1,6 +1,6 @@
 # LaunchLens: Drug Revenue Forecasting
 
-**Live demo:** https://launchlens.onrender.com. Sign in with the demo accounts below. It's on Render's
+**Live demo:** https://launchlens-2c6d.onrender.com. Sign in with the demo accounts below. It's on Render's
 free tier, so the first visit after a while idle can take about a minute to wake up.
 
 A small web app that produces a 10-year (2027–2036) revenue forecast for a new drug using a
