@@ -7,11 +7,22 @@ import type { Role } from "../api/types";
 import { AuthContext, type AuthContextValue } from "../auth/AuthContext";
 import { WorkspaceProvider } from "../workspace/WorkspaceContext";
 
+interface RenderOptions {
+  /** Route patterns that render `ui` (default: just "/"). */
+  paths?: string[];
+  initialEntry?: string;
+}
+
+export const TEST_USERS = {
+  FORECASTER: { id: 1, email: "forecaster@example.com", role: "FORECASTER" as const, created_at: "" },
+  BRAND_LEAD: { id: 2, email: "brandlead@example.com", role: "BRAND_LEAD" as const, created_at: "" },
+};
+
 /** Render a page as a signed-in user, inside a data router and the real WorkspaceProvider. */
-export function renderAsUser(ui: ReactElement, role: Role = "FORECASTER") {
+export function renderAsUser(ui: ReactElement, role: Role = "FORECASTER", { paths = ["/"], initialEntry }: RenderOptions = {}) {
   const auth: AuthContextValue = {
     status: "authenticated",
-    user: { id: role === "FORECASTER" ? 1 : 2, email: `${role.toLowerCase()}@example.com`, role, created_at: "" },
+    user: TEST_USERS[role],
     canEdit: role === "FORECASTER",
     sessionExpired: false,
     login: vi.fn(),
@@ -19,10 +30,10 @@ export function renderAsUser(ui: ReactElement, role: Role = "FORECASTER") {
   };
   const router = createMemoryRouter(
     [
-      { path: "/", element: <WorkspaceProvider>{ui}</WorkspaceProvider> },
+      ...paths.map((path) => ({ path, element: <WorkspaceProvider>{ui}</WorkspaceProvider> })),
       { path: "/elsewhere", element: <p>Elsewhere</p> },
     ],
-    { initialEntries: ["/"] },
+    { initialEntries: [initialEntry ?? paths[0]] },
   );
   return {
     ...render(

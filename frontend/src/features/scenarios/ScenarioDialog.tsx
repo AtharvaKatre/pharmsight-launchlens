@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 
 import { ApiError, errorMessage } from "../../api/client";
 import { ErrorBanner } from "../../components/ErrorBanner";
@@ -37,6 +37,7 @@ export function ScenarioDialog({
   onSubmit,
   onClose,
 }: ScenarioDialogProps) {
+  const fieldId = useId();
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription ?? "");
   const [busy, setBusy] = useState(false);
@@ -89,17 +90,25 @@ export function ScenarioDialog({
             Creates an independent copy of <strong>{sourceName}</strong>, including all ten years of inputs.
           </p>
         )}
-        <label className="field">
-          <span className="field__label">Name</span>
+        <div className="field">
+          <label className="field__label" htmlFor={`${fieldId}-name`}>
+            Name
+          </label>
           <input
+            id={`${fieldId}-name`}
             value={name}
             onChange={(e) => setName(e.target.value)}
             maxLength={NAME_MAX + 50}
             aria-invalid={nameError ? true : undefined}
+            aria-describedby={nameError ? `${fieldId}-name-error` : undefined}
             disabled={busy}
           />
-          {nameError && <span className="field__error">{nameError}</span>}
-        </label>
+          {nameError && (
+            <span id={`${fieldId}-name-error`} className="field__error">
+              {nameError}
+            </span>
+          )}
+        </div>
         {showDescription && (
           <label className="field">
             <span className="field__label">

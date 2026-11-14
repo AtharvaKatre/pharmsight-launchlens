@@ -303,6 +303,27 @@ input.grid-cell:focus {
   font-weight: 600;
 }
 
+.import-errors {
+  max-height: 240px;
+  margin: 0;
+  padding: 10px 14px 10px 30px;
+  overflow-y: auto;
+  border: 1px solid #f6cfcc;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: #8c241f;
+  font-size: 13px;
+}
+
+.import-errors li + li {
+  margin-top: 3px;
+}
+
+code {
+  font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+  font-size: 12px;
+}
+
 .grid-cell--readonly {
   color: var(--ink-2);
 }

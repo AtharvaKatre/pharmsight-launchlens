@@ -1,9 +1,15 @@
 # PharmSight Frontend
 
-A React + TypeScript (Vite) interface for the PharmSight forecast API. It includes login, the
-application shell, scenario management, a spreadsheet-style input editor and the results dashboard.
+A React + TypeScript (Vite) interface for the PharmSight forecast API. It includes:
+- login and the application shell;
+- scenario management, with a spreadsheet-style input editor and CSV import/export;
+- the results dashboard, with results export;
+- version history with comments.
 
-## Running locally
+In Docker it's built and served by nginx (`Dockerfile`, `nginx.conf`), which also proxies `/api` to
+the backend. See the [top-level README](../README.md).
+
+## Running locally (development)
 
 You need Node 20+ and the backend running on `http://localhost:8000` (see `../backend/README.md`).
 
@@ -45,7 +51,8 @@ src/
     login/      Sign-in page
     scenarios/  Scenario list, editor, input grid, create/rename/clone dialogs, client-side validation
     dashboard/  KPI cards, net revenue chart (with table view), patient funnel
-    versions/   Placeholder: version history arrives in a later phase
+    versions/   Version history: save version, read-only snapshot view, comments
+  lib/csv.ts    CSV parsing/writing; features/scenarios/csvInputs.ts and dashboard/csvResults.ts hold the formats
   lib/          Number formatting, scenario type and colour helpers
 ```
 
@@ -72,3 +79,8 @@ src/
 - **Charts.** Each scenario keeps a fixed colour (Base blue, Downside orange, Upside aqua, then the
   next palette slots for custom scenarios). The palette was checked for colour-vision deficiency. The
   net revenue chart has a legend, a hover tooltip and a table view.
+- **CSV import.** Forecasters only. The whole file is validated first, with every problem listed,
+  and nothing is applied if anything is wrong. Valid values become unsaved edits to review before
+  saving. Export uses the same format, so a file can be exported, edited and re-imported.
+- **Versions.** Forecasters save a version with a required comment. The detail view renders only
+  the stored snapshot (chart, funnel and read-only inputs), never live data. Both roles can comment.

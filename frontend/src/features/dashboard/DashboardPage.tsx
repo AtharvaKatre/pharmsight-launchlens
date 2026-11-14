@@ -15,7 +15,9 @@ import {
   formatSignedRatio,
   toNumber,
 } from "../../lib/format";
+import { downloadCsv } from "../../lib/download";
 import { scenarioKind } from "../../lib/scenarioKind";
+import { resultsToCsv } from "./csvResults";
 import { useWorkspace } from "../../workspace/WorkspaceContext";
 import { KpiCard } from "./KpiCard";
 import { PatientFunnel } from "./PatientFunnel";
@@ -91,6 +93,14 @@ export function DashboardPage() {
     );
   }
 
+  function exportResults() {
+    const rows = scenarios.flatMap((s) => {
+      const years = forecasts.get(s.id);
+      return years ? [{ name: s.name, years }] : [];
+    });
+    downloadCsv(`pharmsight-forecast-results-${new Date().toISOString().slice(0, 10)}.csv`, resultsToCsv(rows));
+  }
+
   const net = result ? toNumber(result.net_revenue) : 0;
   const baseNet = baseResult ? toNumber(baseResult.net_revenue) : 0;
   const vsBase =
@@ -98,7 +108,15 @@ export function DashboardPage() {
 
   return (
     <>
-      <PageHeader title="Dashboard" subtitle="Forecast results across scenarios, calculated from the current saved inputs." />
+      <PageHeader
+        title="Dashboard"
+        subtitle="Forecast results across scenarios, calculated from the current saved inputs."
+        actions={
+          <button type="button" className="btn btn--ghost" onClick={exportResults} disabled={forecastState !== "ready"}>
+            Export results CSV
+          </button>
+        }
+      />
 
       <div className="filter-row" role="group" aria-label="Dashboard filters">
         <label className="filter">

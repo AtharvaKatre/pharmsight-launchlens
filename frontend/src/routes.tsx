@@ -21,6 +21,7 @@ export const routes: RouteObject[] = [
       { path: "dashboard", element: <DashboardPage /> },
       { path: "scenarios", element: <ScenariosPage /> },
       { path: "versions", element: <VersionsPage /> },
+      { path: "versions/:versionId", element: <VersionsPage /> },
     ],
   },
   { path: "*", element: <Navigate to="/dashboard" replace /> },

@@ -82,6 +82,47 @@ export interface ScenarioForecast {
   years: YearResult[];
 }
 
+/** Non-sensitive identity attached to versions and comments. */
+export interface UserPublic {
+  id: number;
+  email: string;
+  role: Role;
+}
+
+export interface ScenarioSnapshot {
+  scenario_id: number;
+  name: string;
+  description: string | null;
+  years: YearInput[];
+  forecast: YearResult[];
+}
+
+export interface VersionSummary {
+  id: number;
+  created_by: number;
+  author: UserPublic;
+  created_at: string;
+  comment: string | null;
+}
+
+/** An immutable snapshot of every scenario (inputs + results) at save time. */
+export interface VersionDetail extends VersionSummary {
+  snapshot: { scenarios: ScenarioSnapshot[] };
+}
+
+export interface VersionCreate {
+  comment?: string | null;
+}
+
+export interface VersionComment {
+  id: number;
+  version_id: number;
+  user_id: number;
+  author: UserPublic;
+  content: string;
+  created_at: string;
+}
+
 /** One entry of FastAPI's 422 `detail` array. */
 export interface ValidationIssue {
   loc: (string | number)[];

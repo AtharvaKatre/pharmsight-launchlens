@@ -1,4 +1,8 @@
-import type { ScenarioSummary } from "../api/types";
+/** Anything plotted or listed as a scenario: live scenarios and saved snapshots alike. */
+export interface NamedScenario {
+  id: number;
+  name: string;
+}
 
 /**
  * The API has no scenario "type" field, so the three standard scenarios are recognised by name.
@@ -22,7 +26,7 @@ export const KIND_LABEL: Record<ScenarioKind, string> = {
 const KIND_ORDER: Record<ScenarioKind, number> = { base: 0, upside: 1, downside: 2, custom: 3 };
 
 /** Standard scenarios first (Base, Upside, Downside), then custom scenarios in creation order. */
-export function sortScenarios<T extends ScenarioSummary>(scenarios: T[]): T[] {
+export function sortScenarios<T extends NamedScenario>(scenarios: T[]): T[] {
   return [...scenarios].sort(
     (a, b) => KIND_ORDER[scenarioKind(a.name)] - KIND_ORDER[scenarioKind(b.name)] || a.id - b.id,
   );
@@ -38,9 +42,9 @@ const OVERFLOW_COLOR = "#898781";
  * Colour per scenario: Base, Downside and Upside always own slots 1–3; custom scenarios take
  * slots 4–8 in id order, then any standard slot whose scenario doesn't exist, then a neutral grey.
  */
-export function scenarioColors(scenarios: ScenarioSummary[]): Map<number, string> {
+export function scenarioColors(scenarios: NamedScenario[]): Map<number, string> {
   const colors = new Map<number, string>();
-  const custom: ScenarioSummary[] = [];
+  const custom: NamedScenario[] = [];
   const usedSlots = new Set<number>();
 
   for (const scenario of [...scenarios].sort((a, b) => a.id - b.id)) {

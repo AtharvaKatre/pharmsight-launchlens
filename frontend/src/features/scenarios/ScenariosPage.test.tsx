@@ -5,8 +5,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/client";
 import { scenariosApi } from "../../api/scenarios";
 import type { ScenarioUpdate } from "../../api/types";
+import { parseCsv, toCsv } from "../../lib/csv";
+import { downloadCsv } from "../../lib/download";
 import { BASE_YEARS, detail, STANDARD_SCENARIOS, summary } from "../../test/fixtures";
 import { renderAsUser } from "../../test/render";
+import { inputsToCsv } from "./csvInputs";
 import { ScenariosPage } from "./ScenariosPage";
 
 vi.mock("../../api/scenarios", () => ({
@@ -19,6 +22,11 @@ vi.mock("../../api/scenarios", () => ({
     clone: vi.fn(),
     forecast: vi.fn(),
   },
+}));
+
+vi.mock("../../lib/download", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/download")>()),
+  downloadCsv: vi.fn(),
 }));
 
 const api = vi.mocked(scenariosApi);
@@ -270,7 +278,81 @@ describe("ScenariosPage – scenario actions", () => {
   });
 });
 
+describe("ScenariosPage – CSV import and export", () => {
+  const csvFile = (text: string, name = "inputs.csv") => new File([text], name, { type: "text/csv" });
+
+  function editedBaseCsv(): string {
+    const rows = parseCsv(inputsToCsv(BASE_YEARS));
+    rows[1][6] = "12.5"; // 2027 uptake
+    rows[4][8] = "11000"; // 2030 price
+    return toCsv(rows);
+  }
+
+  it("exports the saved inputs in the import format", async () => {
+    await renderPage();
+    await userEvent.click(screen.getByRole("button", { name: "Export CSV" }));
+
+    expect(downloadCsv).toHaveBeenCalledWith("base-inputs.csv", inputsToCsv(BASE_YEARS));
+  });
+
+  it("imports a valid file into the unsaved-edits workflow without saving", async () => {
+    await renderPage();
+
+    await userEvent.upload(screen.getByLabelText("Import inputs CSV file"), csvFile(editedBaseCsv()));
+
+    expect(await screen.findByText(/2 values differ from the saved inputs/)).toBeInTheDocument();
+    expect(cell("Uptake", 2027)).toHaveValue("12.5%");
+    expect(cell("Uptake", 2027)).toHaveClass("is-changed");
+    expect(cell("Annual gross price", 2030)).toHaveValue("$11,000");
+    expect(screen.getByText("2 unsaved changes")).toBeInTheDocument();
+    expect(api.update).not.toHaveBeenCalled();
+  });
+
+  it("saves imported values exactly", async () => {
+    api.update.mockImplementation(async (id, body: ScenarioUpdate) => ({ ...detail(STANDARD_SCENARIOS[0]), id, years: body.years }));
+    await renderPage();
+    await userEvent.upload(screen.getByLabelText("Import inputs CSV file"), csvFile(editedBaseCsv()));
+    await screen.findByText(/2 values differ/);
+
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() => expect(api.update).toHaveBeenCalledOnce());
+    const years = api.update.mock.calls[0][1].years;
+    expect(years[0].uptake_pct).toBe("12.5");
+    expect(years[3].annual_price).toBe("11000");
+    expect(years[9].prevalent_patients).toBe("2187370.545368721802000000");
+  });
+
+  it("rejects an invalid file as a whole and lists every problem", async () => {
+    const rows = parseCsv(inputsToCsv(BASE_YEARS));
+    rows[1][6] = "12.5"; // a valid change that must NOT be applied
+    rows[2][2] = "150";
+    rows.splice(10, 1); // drop 2036 (row 0 is the header)
+    await renderPage();
+
+    await userEvent.upload(screen.getByLabelText("Import inputs CSV file"), csvFile(toCsv(rows), "bad.csv"));
+
+    const dialog = await screen.findByRole("dialog", { name: "CSV not imported" });
+    expect(dialog).toHaveTextContent("bad.csv has 2 problems. No changes were applied.");
+    expect(within(dialog).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+      "Row 3 (2028), diagnosed_pct: Must be between 0% and 100%.",
+      "Missing year: 2036.",
+    ]);
+    await userEvent.click(within(dialog).getByRole("button", { name: "OK" }));
+    expect(cell("Uptake", 2027)).toHaveValue("10%");
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+  });
+});
+
 describe("ScenariosPage – Brand Lead", () => {
+  it("can export inputs but not import them", async () => {
+    await renderPage("BRAND_LEAD");
+
+    expect(screen.getByRole("button", { name: "Export CSV" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Import CSV" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Import inputs CSV file")).not.toBeInTheDocument();
+  });
+
   it("is read-only: no inputs, no create, rename, clone, delete or save", async () => {
     await renderPage("BRAND_LEAD");
 

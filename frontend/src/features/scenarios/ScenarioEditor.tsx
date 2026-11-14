@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useBlocker } from "react-router-dom";
 
 import { ApiError, errorMessage } from "../../api/client";
@@ -9,9 +9,13 @@ import { ConfirmDialog } from "../../components/ConfirmDialog";
 import { ErrorBanner } from "../../components/ErrorBanner";
 import { Icon } from "../../components/Icon";
 import { LoadingState } from "../../components/LoadingState";
+import { Modal } from "../../components/Modal";
 import { ScenarioBadge } from "../../components/ScenarioBadge";
+import { fileSlug } from "../../lib/csv";
+import { downloadCsv, readFileAsText } from "../../lib/download";
 import { formatDateTime } from "../../lib/format";
 import { useWorkspace } from "../../workspace/WorkspaceContext";
+import { INPUT_CSV_COLUMNS, inputsToCsv, parseInputsCsv } from "./csvInputs";
 import { cellKey, cellLabel, INPUT_FIELDS } from "./fields";
 import { InputGrid } from "./InputGrid";
 import { ScenarioDialog, type ScenarioDialogValues } from "./ScenarioDialog";
@@ -39,6 +43,9 @@ export function ScenarioEditor({ scenarioId, onDirtyChange }: ScenarioEditorProp
   const [dialog, setDialog] = useState<Dialog>(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [importNotice, setImportNotice] = useState<string | null>(null);
+  const [importErrors, setImportErrors] = useState<{ file: string; errors: string[] } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -110,6 +117,7 @@ export function ScenarioEditor({ scenarioId, onDirtyChange }: ScenarioEditorProp
       setDraft(updated.years);
       setServerErrors(NO_SERVER_ERRORS);
       setSavedAt(updated.updated_at);
+      setImportNotice(null);
       void reload();
     } catch (err) {
       if (err instanceof ApiError && err.status === 422) {
@@ -129,6 +137,43 @@ export function ScenarioEditor({ scenarioId, onDirtyChange }: ScenarioEditorProp
     setDraft(detail.years);
     setServerErrors(NO_SERVER_ERRORS);
     setSaveError(null);
+    setImportNotice(null);
+  }
+
+  function handleExport() {
+    if (!detail) return;
+    downloadCsv(`${fileSlug(detail.name)}-inputs.csv`, inputsToCsv(detail.years));
+  }
+
+  // The whole file is validated first; only a fully valid file replaces the draft. Nothing is saved
+  // until the user reviews the highlighted cells and clicks Save (which the API restricts to Forecasters).
+  async function handleImportFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !detail || !canEdit) return;
+
+    let text: string;
+    try {
+      text = await readFileAsText(file);
+    } catch (err) {
+      setImportErrors({ file: file.name, errors: [errorMessage(err)] });
+      return;
+    }
+    const parsed = parseInputsCsv(text, detail.years.map((y) => y.year));
+    if (!parsed.ok) {
+      setImportErrors({ file: file.name, errors: parsed.errors });
+      return;
+    }
+    const changes = countChanges(parsed.years, detail.years);
+    setDraft(parsed.years);
+    setServerErrors(NO_SERVER_ERRORS);
+    setSaveError(null);
+    setSavedAt(null);
+    setImportNotice(
+      changes === 0
+        ? `${file.name} matches the saved inputs — nothing to change.`
+        : `Imported ${file.name}: ${changes} ${changes === 1 ? "value differs" : "values differ"} from the saved inputs. Review the highlighted cells, then save.`,
+    );
   }
 
   // Renaming sends the last *saved* inputs so unsaved grid edits are never saved implicitly.
@@ -174,26 +219,62 @@ export function ScenarioEditor({ scenarioId, onDirtyChange }: ScenarioEditorProp
           {detail.description && <p className="editor__description">{detail.description}</p>}
           <p className="editor__meta">Last updated {formatDateTime(detail.updated_at)}</p>
         </div>
-        {canEdit && (
-          <div className="editor__actions">
-            <button type="button" className="btn btn--ghost btn--sm" onClick={() => setDialog("rename")}>
-              <Icon name="edit" size={16} /> Rename
-            </button>
-            <button
-              type="button"
-              className="btn btn--ghost btn--sm"
-              onClick={() => setDialog("clone")}
-              disabled={dirty}
-              title={dirty ? "Save or discard your changes before cloning" : undefined}
-            >
-              <Icon name="copy" size={16} /> Clone
-            </button>
-            <button type="button" className="btn btn--ghost btn--sm btn--danger-text" onClick={() => setDialog("delete")}>
-              <Icon name="trash" size={16} /> Delete
-            </button>
-          </div>
-        )}
+        <div className="editor__actions">
+          {canEdit && (
+            <>
+              <button type="button" className="btn btn--ghost btn--sm" onClick={() => fileInputRef.current?.click()}>
+                <Icon name="upload" size={16} /> Import CSV
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,text/csv"
+                className="sr-only"
+                tabIndex={-1}
+                aria-label="Import inputs CSV file"
+                onChange={handleImportFile}
+              />
+            </>
+          )}
+          <button
+            type="button"
+            className="btn btn--ghost btn--sm"
+            onClick={handleExport}
+            title={dirty ? "Exports the saved inputs (unsaved edits are not included)" : undefined}
+          >
+            <Icon name="download" size={16} /> Export CSV
+          </button>
+          {canEdit && (
+            <>
+              <button type="button" className="btn btn--ghost btn--sm" onClick={() => setDialog("rename")}>
+                <Icon name="edit" size={16} /> Rename
+              </button>
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                onClick={() => setDialog("clone")}
+                disabled={dirty}
+                title={dirty ? "Save or discard your changes before cloning" : undefined}
+              >
+                <Icon name="copy" size={16} /> Clone
+              </button>
+              <button type="button" className="btn btn--ghost btn--sm btn--danger-text" onClick={() => setDialog("delete")}>
+                <Icon name="trash" size={16} /> Delete
+              </button>
+            </>
+          )}
+        </div>
       </header>
+
+      {importNotice && (
+        <div className="banner banner--info" role="status">
+          <Icon name="upload" size={16} />
+          <span className="banner__body">{importNotice}</span>
+          <button type="button" className="icon-btn" onClick={() => setImportNotice(null)} aria-label="Dismiss">
+            <Icon name="close" size={16} />
+          </button>
+        </div>
+      )}
 
       {!canEdit && (
         <div className="banner banner--info">
@@ -277,6 +358,32 @@ export function ScenarioEditor({ scenarioId, onDirtyChange }: ScenarioEditorProp
           </p>
           <p className="muted">Previously saved forecast versions are not affected.</p>
         </ConfirmDialog>
+      )}
+      {importErrors && (
+        <Modal
+          title="CSV not imported"
+          onClose={() => setImportErrors(null)}
+          footer={
+            <button type="button" className="btn btn--primary" onClick={() => setImportErrors(null)}>
+              OK
+            </button>
+          }
+        >
+          <p className="modal__text">
+            <strong>{importErrors.file}</strong> has {importErrors.errors.length}{" "}
+            {importErrors.errors.length === 1 ? "problem" : "problems"}. No changes were applied.
+          </p>
+          <ul className="import-errors">
+            {importErrors.errors.slice(0, 12).map((e) => (
+              <li key={e}>{e}</li>
+            ))}
+            {importErrors.errors.length > 12 && <li className="muted">…and {importErrors.errors.length - 12} more</li>}
+          </ul>
+          <p className="muted">
+            Expected columns: <code>{INPUT_CSV_COLUMNS.join(", ")}</code>, one row per year. Tip: use Export CSV to get a
+            correctly formatted file.
+          </p>
+        </Modal>
       )}
       {blocker.state === "blocked" && (
         <ConfirmDialog

@@ -1,7 +1,8 @@
 # PharmSight Backend
 
-The drug revenue forecast engine (Phase 1), plus PostgreSQL persistence and a FastAPI REST API
-(Phase 2). There is no frontend yet.
+The forecast engine, plus PostgreSQL persistence and a FastAPI REST API. To run the whole app, use
+`docker compose up` from the repository root (see the [top-level README](../README.md)). This file
+covers running and testing the backend on its own.
 
 ## Structure
 
@@ -18,8 +19,9 @@ backend/
 │   ├── schemas.py         # API request/response models (scenario inputs reuse YearInput / ForecastInput)
 │   ├── security.py        # Argon2 password hashing, JWT tokens
 │   ├── seed.py            # Demo users and the Base / Upside / Downside scenarios
-│   └── main.py            # FastAPI app
+│   └── main.py            # FastAPI app (plus /api/health)
 ├── alembic/               # Database migrations
+├── Dockerfile             # Production image; docker-entrypoint.sh waits for the DB, migrates and seeds
 └── tests/                 # Engine unit tests; tests/api/ holds API and integration tests (need PostgreSQL)
 ```
 
@@ -52,13 +54,12 @@ uvicorn app.main:app --reload
 Interactive API docs: http://localhost:8000/docs. Log in through `POST /api/auth/login`, then
 paste the `access_token` into **Authorize**.
 
-`DATABASE_URL` defaults to `postgresql+psycopg://pharmsight:pharmsight@localhost:5432/pharmsight`,
-which matches `docker-compose.yml`.
+`DATABASE_URL` defaults to `postgresql+psycopg://pharmsight:pharmsight@localhost:55432/pharmsight`.
+That matches the port `docker-compose.yml` publishes, bound to `127.0.0.1` only.
 
-If another Postgres is already using port 5432, choose a different host port. Put
-`PHARMSIGHT_DB_PORT=5434` in a `.env` next to `docker-compose.yml` (Compose reads it automatically),
-then use port 5434 in `DATABASE_URL` and `TEST_DATABASE_URL` in `backend/.env`. Both `.env` files
-are git-ignored.
+To use a different host port, set `PHARMSIGHT_DB_PORT` in a `.env` next to `docker-compose.yml`
+(Compose reads it automatically) and use the same port in `DATABASE_URL` and `TEST_DATABASE_URL` in
+`backend/.env`. Both `.env` files are git-ignored.
 
 ## Demo credentials
 

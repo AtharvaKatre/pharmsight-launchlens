@@ -3,6 +3,9 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { scenariosApi } from "../../api/scenarios";
+import { parseCsv } from "../../lib/csv";
+import { downloadCsv } from "../../lib/download";
+import { RESULT_CSV_COLUMNS } from "./csvResults";
 import { forecast, STANDARD_SCENARIOS } from "../../test/fixtures";
 import { renderAsUser } from "../../test/render";
 import { DashboardPage } from "./DashboardPage";
@@ -10,6 +13,7 @@ import { DashboardPage } from "./DashboardPage";
 vi.mock("../../api/scenarios", () => ({
   scenariosApi: { list: vi.fn(), forecast: vi.fn() },
 }));
+vi.mock("../../lib/download", () => ({ downloadCsv: vi.fn() }));
 
 const api = vi.mocked(scenariosApi);
 const SCALE: Record<number, number> = { 1: 1, 2: 1.5, 3: 0.5 };
@@ -96,6 +100,26 @@ describe("DashboardPage", () => {
       "$43,200,000",
       "$14,400,000",
     ]);
+  });
+
+  it("exports the full funnel and revenue for every scenario as CSV", async () => {
+    await renderDashboard("BRAND_LEAD");
+    await userEvent.click(screen.getByRole("button", { name: "Export results CSV" }));
+
+    expect(downloadCsv).toHaveBeenCalledOnce();
+    const [filename, csv] = vi.mocked(downloadCsv).mock.calls[0];
+    expect(filename).toMatch(/^pharmsight-forecast-results-\d{4}-\d{2}-\d{2}\.csv$/);
+    const rows = parseCsv(csv);
+    expect(rows[0]).toEqual([...RESULT_CSV_COLUMNS]);
+    expect(rows).toHaveLength(1 + 3 * 10);
+    expect(rows.slice(1).map((r) => r[0])).toEqual([
+      ...Array(10).fill("Base"),
+      ...Array(10).fill("Upside"),
+      ...Array(10).fill("Downside"),
+    ]);
+    // Values are written exactly as the API returned them (full precision, no rounding).
+    expect(rows[1][RESULT_CSV_COLUMNS.indexOf("gross_revenue")]).toBe("38400000.000000");
+    expect(Number(rows[1][RESULT_CSV_COLUMNS.indexOf("net_revenue")])).toBe(28_800_000);
   });
 
   it("is fully viewable by a Brand Lead", async () => {

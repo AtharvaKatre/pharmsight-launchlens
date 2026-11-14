@@ -13,6 +13,8 @@ const PATHS = {
   close: "M6 6l12 12M18 6 6 18",
   table: "M3 5h18v14H3zM3 10h18M3 15h18M9 5v14",
   chart: "M4 19h16M4 15l5-5 4 3 7-7",
+  upload: "M12 16V4M7 9l5-5 5 5M4 16v4h16v-4",
+  download: "M12 4v12M7 11l5 5 5-5M4 16v4h16v-4",
 } as const;
 
 export type IconName = keyof typeof PATHS;

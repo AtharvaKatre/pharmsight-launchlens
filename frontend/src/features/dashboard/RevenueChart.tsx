@@ -11,13 +11,14 @@ import {
   type TooltipProps,
 } from "recharts";
 
-import type { ScenarioSummary, YearResult } from "../../api/types";
+import type { YearResult } from "../../api/types";
 import { Icon } from "../../components/Icon";
 import { SeriesDot } from "../../components/ScenarioBadge";
 import { formatCurrency, formatCurrencyCompact, toNumber } from "../../lib/format";
+import type { NamedScenario } from "../../lib/scenarioKind";
 
 interface RevenueChartProps {
-  scenarios: ScenarioSummary[];
+  scenarios: NamedScenario[];
   forecasts: Map<number, YearResult[]>;
   colors: Map<number, string>;
   focusId: number | null;
@@ -162,11 +163,11 @@ function ChartTooltip({
   label,
   scenarios,
   colors,
-}: TooltipProps<number, string> & { scenarios: ScenarioSummary[]; colors: Map<number, string> }) {
+}: TooltipProps<number, string> & { scenarios: NamedScenario[]; colors: Map<number, string> }) {
   if (!active || !payload?.length) return null;
   const values = scenarios
     .map((s) => ({ s, value: payload.find((p) => p.dataKey === `s${s.id}`)?.value }))
-    .filter((v): v is { s: ScenarioSummary; value: number } => typeof v.value === "number")
+    .filter((v): v is { s: NamedScenario; value: number } => typeof v.value === "number")
     .sort((a, b) => b.value - a.value);
 
   return (
