@@ -3,7 +3,7 @@ import { defineConfig } from "vitest/config";
 
 // In development the Vite server proxies /api to the FastAPI backend, so the browser
 // only ever talks to one origin and the backend needs no CORS configuration.
-const apiTarget = process.env.PHARMSIGHT_API_URL ?? "http://localhost:8000";
+const apiTarget = process.env.LAUNCHLENS_API_URL ?? "http://localhost:8000";
 
 export default defineConfig({
   plugins: [react()],

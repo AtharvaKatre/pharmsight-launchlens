@@ -7,7 +7,7 @@ If the database is unreachable these tests are skipped (the reason is shown in t
 import os
 from pathlib import Path
 
-os.environ.setdefault("JWT_SECRET", "test-only-secret-key-for-pharmsight-api-tests")
+os.environ.setdefault("JWT_SECRET", "test-only-secret-key-for-launchlens-api-tests")
 
 import pytest
 from alembic import command
@@ -25,7 +25,7 @@ from app.security import create_access_token
 from app.seed import BRAND_LEAD_EMAIL, FORECASTER_EMAIL, seed
 
 TEST_DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL", "postgresql+psycopg://pharmsight:pharmsight@127.0.0.1:55432/pharmsight_test"
+    "TEST_DATABASE_URL", "postgresql+psycopg://launchlens:launchlens@127.0.0.1:55432/launchlens_test"
 )
 ALEMBIC_INI = Path(__file__).resolve().parents[2] / "alembic.ini"
 

@@ -108,7 +108,7 @@ describe("DashboardPage", () => {
 
     expect(downloadCsv).toHaveBeenCalledOnce();
     const [filename, csv] = vi.mocked(downloadCsv).mock.calls[0];
-    expect(filename).toMatch(/^pharmsight-forecast-results-\d{4}-\d{2}-\d{2}\.csv$/);
+    expect(filename).toMatch(/^launchlens-forecast-results-\d{4}-\d{2}-\d{2}\.csv$/);
     const rows = parseCsv(csv);
     expect(rows[0]).toEqual([...RESULT_CSV_COLUMNS]);
     expect(rows).toHaveLength(1 + 3 * 10);

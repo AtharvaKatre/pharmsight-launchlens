@@ -4,7 +4,7 @@ import { authApi } from "../api/auth";
 import { ApiError, onUnauthorized, setAuthToken } from "../api/client";
 import type { User } from "../api/types";
 
-const TOKEN_KEY = "pharmsight.token";
+const TOKEN_KEY = "launchlens.token";
 
 function readStoredToken(): string | null {
   try {

@@ -26,7 +26,7 @@ export function AppShell() {
               </svg>
             </span>
             <span>
-              PharmSight
+              LaunchLens
               <small>Revenue Forecasting</small>
             </span>
           </div>

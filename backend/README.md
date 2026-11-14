@@ -1,4 +1,4 @@
-# PharmSight Backend
+# LaunchLens Backend
 
 The forecast engine, plus PostgreSQL persistence and a FastAPI REST API. To run the whole app, use
 `docker compose up` from the repository root (see the [top-level README](../README.md)). This file
@@ -30,7 +30,7 @@ backend/
 You need Python 3.11+ and Docker.
 
 ```bash
-# 1. Start PostgreSQL (from the repository root). This creates the pharmsight and pharmsight_test databases.
+# 1. Start PostgreSQL (from the repository root). This creates the launchlens and launchlens_test databases.
 docker compose up -d db
 
 # 2. Install dependencies (from backend/)
@@ -54,10 +54,10 @@ uvicorn app.main:app --reload
 Interactive API docs: http://localhost:8000/docs. Log in through `POST /api/auth/login`, then
 paste the `access_token` into **Authorize**.
 
-`DATABASE_URL` defaults to `postgresql+psycopg://pharmsight:pharmsight@127.0.0.1:55432/pharmsight`.
+`DATABASE_URL` defaults to `postgresql+psycopg://launchlens:launchlens@127.0.0.1:55432/launchlens`.
 That matches the port `docker-compose.yml` publishes, bound to `127.0.0.1` only.
 
-To use a different host port, set `PHARMSIGHT_DB_PORT` in a `.env` next to `docker-compose.yml`
+To use a different host port, set `LAUNCHLENS_DB_PORT` in a `.env` next to `docker-compose.yml`
 (Compose reads it automatically) and use the same port in `DATABASE_URL` and `TEST_DATABASE_URL` in
 `backend/.env`. Both `.env` files are git-ignored.
 
@@ -79,7 +79,7 @@ python -m pytest
 
 - **Engine tests** (`tests/test_*.py`) don't need a database.
 - **API and integration tests** (`tests/api/`) run against real PostgreSQL at `TEST_DATABASE_URL`
-  (default: the `pharmsight_test` database from `docker compose`). The suite drops and recreates the
+  (default: the `launchlens_test` database from `docker compose`). The suite drops and recreates the
   schema in that database through Alembic. If PostgreSQL isn't reachable, these tests are **skipped**,
   and the reason is printed in the test summary.
 

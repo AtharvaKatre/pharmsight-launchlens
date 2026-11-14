@@ -1,6 +1,6 @@
-# PharmSight Frontend
+# LaunchLens Frontend
 
-A React + TypeScript (Vite) interface for the PharmSight forecast API. It includes:
+A React + TypeScript (Vite) interface for the LaunchLens forecast API. It includes:
 - login and the application shell;
 - scenario management, with a spreadsheet-style input editor and CSV import/export;
 - the results dashboard, with results export;
@@ -20,7 +20,7 @@ npm run dev          # http://localhost:5173
 
 The Vite dev server proxies `/api` to the backend, so the browser only talks to one origin and the
 backend needs no CORS configuration. To point the proxy at a different API, set
-`PHARMSIGHT_API_URL`, for example `PHARMSIGHT_API_URL=http://localhost:9000 npm run dev`.
+`LAUNCHLENS_API_URL`, for example `LAUNCHLENS_API_URL=http://localhost:9000 npm run dev`.
 
 Demo accounts (created by `python -m app.seed`):
 

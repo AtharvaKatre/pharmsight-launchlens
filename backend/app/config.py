@@ -28,7 +28,7 @@ def normalize_database_url(url: str) -> str:
 def get_database_url() -> str:
     return normalize_database_url(
         # Default matches the host port docker-compose.yml publishes for the database.
-        os.getenv("DATABASE_URL", "postgresql+psycopg://pharmsight:pharmsight@127.0.0.1:55432/pharmsight")
+        os.getenv("DATABASE_URL", "postgresql+psycopg://launchlens:launchlens@127.0.0.1:55432/launchlens")
     )
 
 

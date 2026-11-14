@@ -20,7 +20,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     yield
 
 
-app = FastAPI(title="PharmSight Forecast API", version="0.2.0", lifespan=lifespan)
+app = FastAPI(title="LaunchLens Forecast API", version="0.2.0", lifespan=lifespan)
 app.include_router(auth.router)
 app.include_router(scenarios.router)
 app.include_router(versions.router)

@@ -5,7 +5,7 @@ import { scenariosApi } from "../api/scenarios";
 import type { ScenarioSummary } from "../api/types";
 import { scenarioColors, scenarioKind, sortScenarios } from "../lib/scenarioKind";
 
-const ACTIVE_KEY = "pharmsight.activeScenario";
+const ACTIVE_KEY = "launchlens.activeScenario";
 
 export interface WorkspaceContextValue {
   /** Sorted: Base, Upside, Downside, then custom scenarios. */

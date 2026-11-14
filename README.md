@@ -1,6 +1,6 @@
-# PharmSight: Drug Revenue Forecasting
+# LaunchLens: Drug Revenue Forecasting
 
-**Live demo:** https://pharmsight.onrender.com. Sign in with the demo accounts below. It's on Render's
+**Live demo:** https://launchlens.onrender.com. Sign in with the demo accounts below. It's on Render's
 free tier, so the first visit after a while idle can take about a minute to wake up.
 
 A small web app that produces a 10-year (2027–2036) revenue forecast for a new drug using a
@@ -8,6 +8,7 @@ patient-funnel model. Forecasters edit year-by-year assumptions for Base, Upside
 scenarios, compare results, export them, and save read-only versions. Brand Leads review the
 forecasts and comment on saved versions.
 
+Built as a take-home engineering case study: a patient-funnel revenue forecast for a new drug launch.
 All data is synthetic.
 
 ---
@@ -44,8 +45,8 @@ next to `docker-compose.yml`:
 | Variable | Default | Purpose |
 |---|---|---|
 | `JWT_SECRET` | a **development-only** value set in `docker-compose.yml` | Signs login tokens. **Set your own (32+ characters) for any shared deployment.** |
-| `PHARMSIGHT_WEB_PORT` | `8080` | Host port for the web app |
-| `PHARMSIGHT_DB_PORT` | `55432` | Host port for PostgreSQL, bound to `127.0.0.1` only. It's an uncommon port, so it won't clash with a local Postgres. |
+| `LAUNCHLENS_WEB_PORT` | `8080` | Host port for the web app |
+| `LAUNCHLENS_DB_PORT` | `55432` | Host port for PostgreSQL, bound to `127.0.0.1` only. It's an uncommon port, so it won't clash with a local Postgres. |
 
 ---
 
@@ -216,7 +217,7 @@ npm run build       # type check and production build
 PostgreSQL:
 
 ```bash
-docker compose up -d db                # PostgreSQL on 127.0.0.1:55432, including the pharmsight_test database
+docker compose up -d db                # PostgreSQL on 127.0.0.1:55432, including the launchlens_test database
 cd backend
 python -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt     # Windows: .venv\Scripts\pip ...
@@ -225,7 +226,7 @@ cp .env.example .env                              # then set JWT_SECRET (any 32+
 ```
 
 If PostgreSQL isn't reachable, the API tests are skipped and the reason is printed. The suite drops
-and recreates the schema in `pharmsight_test` only.
+and recreates the schema in `launchlens_test` only.
 
 ---
 

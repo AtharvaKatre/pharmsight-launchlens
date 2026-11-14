@@ -59,7 +59,7 @@ describe("LoginPage", () => {
     expect(await screen.findByText("Dashboard content")).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/dashboard");
     expect(authApi.login).toHaveBeenCalledWith("forecaster@example.com", "Forecaster123!");
-    expect(localStorage.getItem("pharmsight.token")).toBe("token-123");
+    expect(localStorage.getItem("launchlens.token")).toBe("token-123");
   });
 
   it("shows the API error for wrong credentials and stays on the login page", async () => {
@@ -70,7 +70,7 @@ describe("LoginPage", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Incorrect email or password");
     expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
-    expect(localStorage.getItem("pharmsight.token")).toBeNull();
+    expect(localStorage.getItem("launchlens.token")).toBeNull();
   });
 
   it("redirects unauthenticated visitors from protected pages to login", async () => {
@@ -81,7 +81,7 @@ describe("LoginPage", () => {
   });
 
   it("restores a stored session and skips the login page", async () => {
-    localStorage.setItem("pharmsight.token", "stored-token");
+    localStorage.setItem("launchlens.token", "stored-token");
     vi.mocked(authApi.me).mockResolvedValue(FORECASTER);
     const router = renderApp("/login");
 

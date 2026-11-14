@@ -122,7 +122,7 @@ describe("VersionsPage – history", () => {
     await userEvent.click(screen.getByRole("button", { name: "Export results CSV" }));
 
     const [filename, csv] = vi.mocked(downloadCsv).mock.calls[0];
-    expect(filename).toBe("pharmsight-version-2-results.csv");
+    expect(filename).toBe("launchlens-version-2-results.csv");
     const rows = parseCsv(csv);
     expect(rows).toHaveLength(1 + 2 * 10);
     expect(rows[1].slice(0, 2)).toEqual(["Base", "2027"]);

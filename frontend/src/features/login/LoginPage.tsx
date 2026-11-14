@@ -40,7 +40,7 @@ export function LoginPage() {
               <path d="M8 22l5-6 4 3 7-9" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </span>
-          PharmSight
+          LaunchLens
         </div>
         <div className="login__pitch">
           <h2>Revenue forecasting for specialty brands</h2>
@@ -57,7 +57,7 @@ export function LoginPage() {
       <section className="login__panel">
         <form className="login__form" onSubmit={handleSubmit} noValidate={false}>
           <h1>Sign in</h1>
-          <p className="muted">Use your PharmSight account to continue.</p>
+          <p className="muted">Use your LaunchLens account to continue.</p>
 
           {sessionExpired && !error && (
             <div className="banner banner--info" role="status">

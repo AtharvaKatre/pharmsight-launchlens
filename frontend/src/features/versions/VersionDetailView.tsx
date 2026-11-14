@@ -58,7 +58,7 @@ export function VersionDetailView({ versionId }: { versionId: number }) {
   function exportResults() {
     if (!version) return;
     const results = snapshot.scenarios.map((s) => ({ name: s.name, years: s.forecast }));
-    downloadCsv(`pharmsight-version-${version.id}-results.csv`, resultsToCsv(results));
+    downloadCsv(`launchlens-version-${version.id}-results.csv`, resultsToCsv(results));
   }
 
   return (

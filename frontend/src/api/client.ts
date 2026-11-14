@@ -48,7 +48,7 @@ export async function apiRequest<T>(path: string, { method = "GET", body }: Requ
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
-    throw new ApiError(0, "Unable to reach the PharmSight server. Check your connection and try again.");
+    throw new ApiError(0, "Unable to reach the LaunchLens server. Check your connection and try again.");
   }
 
   if (response.status === 204) return undefined as T;

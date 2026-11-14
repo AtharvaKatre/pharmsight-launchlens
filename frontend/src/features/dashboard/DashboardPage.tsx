@@ -98,7 +98,7 @@ export function DashboardPage() {
       const years = forecasts.get(s.id);
       return years ? [{ name: s.name, years }] : [];
     });
-    downloadCsv(`pharmsight-forecast-results-${new Date().toISOString().slice(0, 10)}.csv`, resultsToCsv(rows));
+    downloadCsv(`launchlens-forecast-results-${new Date().toISOString().slice(0, 10)}.csv`, resultsToCsv(rows));
   }
 
   const net = result ? toNumber(result.net_revenue) : 0;
