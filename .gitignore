@@ -1,0 +1,29 @@
+# Environment files hold local credentials and secrets. Only the *.example templates are committed.
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node / frontend build
+node_modules/
+dist/
+*.local
+*.tsbuildinfo
+
+# Local database data (Docker uses a named volume; this covers bind-mount setups)
+pgdata/
+postgres-data/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

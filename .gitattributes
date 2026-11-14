@@ -1,0 +1,7 @@
+# Normalise line endings to LF so shell scripts and config work inside Linux containers,
+# regardless of the contributor's OS.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
