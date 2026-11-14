@@ -1,5 +1,7 @@
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
@@ -9,6 +11,7 @@ from app.api import auth, scenarios, versions
 from app.api.deps import DbSession
 from app.config import get_auth_settings
 from app.errors import NotFoundError
+from app.spa import mount_spa
 
 
 @asynccontextmanager
@@ -33,3 +36,8 @@ def health(db: DbSession) -> dict[str, str]:
 @app.exception_handler(NotFoundError)
 async def not_found_handler(_: Request, exc: NotFoundError) -> JSONResponse:
     return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"detail": str(exc)})
+
+
+# Single-service hosting: also serve the React build. Registered last so API routes take priority.
+if static_dir := os.getenv("STATIC_DIR"):
+    mount_spa(app, Path(static_dir))

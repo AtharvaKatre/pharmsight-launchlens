@@ -1,0 +1,12 @@
+# Build context for the root (hosting) Dockerfile.
+.git
+**/.env
+**/.env.*
+!**/.env.example
+**/node_modules
+**/dist
+**/.venv
+**/__pycache__
+**/.pytest_cache
+backend/tests
+backend/docker

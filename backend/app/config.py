@@ -17,10 +17,18 @@ load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=False)
 MIN_JWT_SECRET_LENGTH = 32
 
 
+def normalize_database_url(url: str) -> str:
+    """Use the psycopg (v3) driver for plain postgres URLs, as provided by hosts such as Render."""
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix) :]
+    return url
+
+
 def get_database_url() -> str:
-    return os.getenv(
-        # Matches the host port docker-compose.yml publishes for the database.
-        "DATABASE_URL", "postgresql+psycopg://pharmsight:pharmsight@localhost:55432/pharmsight"
+    return normalize_database_url(
+        # Default matches the host port docker-compose.yml publishes for the database.
+        os.getenv("DATABASE_URL", "postgresql+psycopg://pharmsight:pharmsight@127.0.0.1:55432/pharmsight")
     )
 
 

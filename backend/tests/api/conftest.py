@@ -25,7 +25,7 @@ from app.security import create_access_token
 from app.seed import BRAND_LEAD_EMAIL, FORECASTER_EMAIL, seed
 
 TEST_DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL", "postgresql+psycopg://pharmsight:pharmsight@localhost:55432/pharmsight_test"
+    "TEST_DATABASE_URL", "postgresql+psycopg://pharmsight:pharmsight@127.0.0.1:55432/pharmsight_test"
 )
 ALEMBIC_INI = Path(__file__).resolve().parents[2] / "alembic.ini"
 
@@ -39,7 +39,8 @@ def alembic_config() -> Config:
 
 @pytest.fixture(scope="session")
 def engine(alembic_config):
-    engine = create_engine(TEST_DATABASE_URL)
+    # A connect timeout turns an unreachable database into a clear skip instead of a hang.
+    engine = create_engine(TEST_DATABASE_URL, connect_args={"connect_timeout": 10})
     try:
         engine.connect().close()
     except OperationalError as exc:

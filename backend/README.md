@@ -54,7 +54,7 @@ uvicorn app.main:app --reload
 Interactive API docs: http://localhost:8000/docs. Log in through `POST /api/auth/login`, then
 paste the `access_token` into **Authorize**.
 
-`DATABASE_URL` defaults to `postgresql+psycopg://pharmsight:pharmsight@localhost:55432/pharmsight`.
+`DATABASE_URL` defaults to `postgresql+psycopg://pharmsight:pharmsight@127.0.0.1:55432/pharmsight`.
 That matches the port `docker-compose.yml` publishes, bound to `127.0.0.1` only.
 
 To use a different host port, set `PHARMSIGHT_DB_PORT` in a `.env` next to `docker-compose.yml`

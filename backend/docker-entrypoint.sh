@@ -30,5 +30,7 @@ alembic upgrade head
 echo "Seeding demo users and scenarios (idempotent)..."
 python -m app.seed
 
-echo "Starting API on port 8000..."
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips="*"
+# Hosting platforms such as Render inject PORT; docker compose uses the default 8000.
+PORT="${PORT:-8000}"
+echo "Starting API on port ${PORT}..."
+exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT}" --proxy-headers --forwarded-allow-ips="*"
