@@ -110,6 +110,8 @@ class ForecastVersion(Base):
     comment: Mapped[str | None] = mapped_column(Text)
     snapshot: Mapped[dict[str, Any]] = mapped_column(JSONB)
 
+    author: Mapped[User] = relationship(lazy="joined")
+
 
 class Comment(Base):
     __tablename__ = "comments"
@@ -119,3 +121,5 @@ class Comment(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     content: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    author: Mapped[User] = relationship(lazy="joined")

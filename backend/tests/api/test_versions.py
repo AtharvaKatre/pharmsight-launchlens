@@ -2,7 +2,8 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import DBAPIError
 
-from app.forecast import YearInput, YearResult, calculate_forecast, generate_base_assumptions
+from app.forecast import ForecastInput, YearInput, YearResult, calculate_forecast
+from app.seed import FORECASTER_EMAIL, initial_scenario_years
 from tests.api.conftest import scenario_payload
 
 
@@ -26,11 +27,20 @@ def test_save_version_snapshots_entire_workspace(client, forecaster_headers, for
     assert [s["name"] for s in scenarios] == ["Base", "Upside", "Downside"]
     assert scenarios[0]["description"] == "Base case assumptions"
 
-    expected_inputs = generate_base_assumptions()
-    expected_results = calculate_forecast(expected_inputs).years
     for scenario in scenarios:
+        expected_inputs = ForecastInput(years=initial_scenario_years(scenario["name"]))
         assert [YearInput.model_validate(y) for y in scenario["years"]] == expected_inputs.years
-        assert [YearResult.model_validate(y) for y in scenario["forecast"]] == expected_results
+        assert [YearResult.model_validate(y) for y in scenario["forecast"]] == calculate_forecast(expected_inputs).years
+
+
+def test_version_includes_author_without_sensitive_fields(client, forecaster_headers, forecaster_id):
+    saved = save_version(client, forecaster_headers, "who saved this?")
+
+    expected_author = {"id": forecaster_id, "email": FORECASTER_EMAIL, "role": "FORECASTER"}
+    assert saved["author"] == expected_author
+    listed = client.get("/api/versions", headers=forecaster_headers).json()[0]
+    assert listed["author"] == expected_author
+    assert "password_hash" not in str(listed)
 
 
 def test_snapshot_reflects_current_edits_and_new_scenarios(client, forecaster_headers):

@@ -19,7 +19,8 @@ MIN_JWT_SECRET_LENGTH = 32
 
 def get_database_url() -> str:
     return os.getenv(
-        "DATABASE_URL", "postgresql+psycopg://pharmsight:pharmsight@localhost:5432/pharmsight"
+        # Matches the host port docker-compose.yml publishes for the database.
+        "DATABASE_URL", "postgresql+psycopg://pharmsight:pharmsight@localhost:55432/pharmsight"
     )
 
 

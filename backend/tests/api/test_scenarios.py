@@ -3,6 +3,7 @@ from decimal import Decimal
 import pytest
 
 from app.forecast import YearInput, YearResult, calculate_forecast, generate_base_assumptions
+from app.seed import initial_scenario_years
 from tests.api.conftest import base_years_payload, scenario_payload
 
 
@@ -29,11 +30,25 @@ def test_seeded_scenarios_are_listed(client, forecaster_headers, forecaster_id):
     assert all("years" not in s for s in scenarios)
 
 
-def test_seeded_scenarios_all_use_base_assumptions(client, forecaster_headers):
-    expected = generate_base_assumptions().years
+def test_seeded_scenarios_use_their_initial_assumptions(client, forecaster_headers):
+    ids = scenario_ids_by_name(client, forecaster_headers)
 
-    for scenario_id in scenario_ids_by_name(client, forecaster_headers).values():
-        assert years_of(client, forecaster_headers, scenario_id) == expected
+    assert years_of(client, forecaster_headers, ids["Base"]) == generate_base_assumptions().years
+    for name in ("Upside", "Downside"):
+        assert years_of(client, forecaster_headers, ids[name]) == initial_scenario_years(name)
+
+
+def test_seeded_scenarios_produce_different_forecasts(client, forecaster_headers):
+    ids = scenario_ids_by_name(client, forecaster_headers)
+    net_2027 = {
+        name: client.get(f"/api/scenarios/{ids[name]}/forecast", headers=forecaster_headers).json()["years"][0]["net_revenue"]
+        for name in ("Base", "Upside", "Downside")
+    }
+
+    # 2027: Base 4,800 x 0.8 x 10,000 x 0.75; Upside 25% x 15%; Downside 15% x 5% with 30% gross-to-net.
+    assert Decimal(net_2027["Base"]) == 28_800_000
+    assert Decimal(net_2027["Upside"]) == 54_000_000
+    assert Decimal(net_2027["Downside"]) == 10_080_000
 
 
 def test_decimal_precision_survives_database_round_trip(client, forecaster_headers):
@@ -146,9 +161,8 @@ def test_editing_one_scenario_never_affects_another(client, forecaster_headers):
     )
 
     assert response.status_code == 200
-    base = generate_base_assumptions().years
-    assert years_of(client, forecaster_headers, ids["Base"]) == base
-    assert years_of(client, forecaster_headers, ids["Upside"]) == base
+    assert years_of(client, forecaster_headers, ids["Base"]) == generate_base_assumptions().years
+    assert years_of(client, forecaster_headers, ids["Upside"]) == initial_scenario_years("Upside")
     assert all(y.peak_brand_share_pct == 10 for y in years_of(client, forecaster_headers, ids["Downside"]))
 
 

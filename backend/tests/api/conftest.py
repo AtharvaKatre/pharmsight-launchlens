@@ -25,7 +25,7 @@ from app.security import create_access_token
 from app.seed import BRAND_LEAD_EMAIL, FORECASTER_EMAIL, seed
 
 TEST_DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL", "postgresql+psycopg://pharmsight:pharmsight@localhost:5432/pharmsight_test"
+    "TEST_DATABASE_URL", "postgresql+psycopg://pharmsight:pharmsight@localhost:55432/pharmsight_test"
 )
 ALEMBIC_INI = Path(__file__).resolve().parents[2] / "alembic.ini"
 

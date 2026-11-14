@@ -1,3 +1,12 @@
+# PharmSight: `docker compose up` starts the full stack.
+#   Web app + API:  http://localhost:8080        (override with PHARMSIGHT_WEB_PORT)
+#   API docs:       http://localhost:8080/docs
+#
+# Optional overrides go in a `.env` file next to this one (Compose reads it automatically):
+#   JWT_SECRET=<random string, 32+ chars>   # replaces the development-only default below
+#   PHARMSIGHT_WEB_PORT=8080
+#   PHARMSIGHT_DB_PORT=55432                # host port for running the backend/tests outside Docker
+
 services:
   db:
     image: postgres:16
@@ -5,17 +14,43 @@ services:
       POSTGRES_USER: pharmsight
       POSTGRES_PASSWORD: pharmsight
       POSTGRES_DB: pharmsight
-    ports:
-      # Override the host port if 5432 is taken, e.g. PHARMSIGHT_DB_PORT=5434
-      - "${PHARMSIGHT_DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./backend/docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    # Published on localhost only, on an uncommon port, so it won't clash with other local Postgres
+    # instances. The app containers talk to the database over the internal Docker network.
+    ports:
+      - "127.0.0.1:${PHARMSIGHT_DB_PORT:-55432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U pharmsight -d pharmsight"]
       interval: 2s
       timeout: 5s
-      retries: 15
+      retries: 30
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://pharmsight:pharmsight@db:5432/pharmsight
+      # DEVELOPMENT-ONLY default. Set JWT_SECRET in .env (or the environment) for any shared deployment.
+      JWT_SECRET: ${JWT_SECRET:-pharmsight-development-only-jwt-secret-do-not-use-in-production}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_SHOW_DEMO_ACCOUNTS: "true"
+    ports:
+      - "${PHARMSIGHT_WEB_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   pgdata:

@@ -100,11 +100,22 @@ class VersionCreate(BaseModel):
     comment: OptionalText = None
 
 
+class UserPublic(BaseModel):
+    """The non-sensitive identity shown next to versions and comments."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    email: str
+    role: Role
+
+
 class VersionSummary(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
     created_by: int
+    author: UserPublic
     created_at: datetime
     comment: str | None
 
@@ -125,5 +136,6 @@ class CommentOut(BaseModel):
     id: int
     version_id: int
     user_id: int
+    author: UserPublic
     content: str
     created_at: datetime

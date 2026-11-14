@@ -94,7 +94,7 @@ export function LoginPage() {
             {submitting ? "Signing in…" : "Sign in"}
           </button>
 
-          {import.meta.env.DEV && (
+          {(import.meta.env.DEV || import.meta.env.VITE_SHOW_DEMO_ACCOUNTS === "true") && (
             <details className="login__demo">
               <summary>Demo accounts</summary>
               <dl>

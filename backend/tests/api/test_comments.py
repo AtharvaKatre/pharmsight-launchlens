@@ -41,6 +41,15 @@ def test_add_and_list_comments_in_order(
     ]
 
 
+def test_comments_include_author_email_and_role(client, brand_lead_headers, brand_lead_id, version_id):
+    client.post(f"/api/versions/{version_id}/comments", json={"content": "Looks reasonable"}, headers=brand_lead_headers)
+
+    comment = client.get(f"/api/versions/{version_id}/comments", headers=brand_lead_headers).json()[0]
+
+    assert comment["author"] == {"id": brand_lead_id, "email": "brandlead@example.com", "role": "BRAND_LEAD"}
+    assert "password_hash" not in str(comment)
+
+
 def test_comments_belong_to_one_version(client, forecaster_headers, brand_lead_headers, version_id):
     other_version = client.post("/api/versions", headers=forecaster_headers).json()["id"]
     client.post(f"/api/versions/{version_id}/comments", json={"content": "On v1"}, headers=brand_lead_headers)
