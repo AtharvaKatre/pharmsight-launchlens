@@ -689,7 +689,9 @@ textarea {
   flex-direction: column;
   gap: 20px;
   width: 100%;
-  max-width: 1440px;
+  /* Centred, so wide monitors get even margins instead of empty space on the right. */
+  max-width: 1600px;
+  margin-inline: auto;
   padding: 28px;
 }
 
