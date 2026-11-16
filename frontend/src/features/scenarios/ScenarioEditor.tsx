@@ -380,8 +380,8 @@ export function ScenarioEditor({ scenarioId, onDirtyChange }: ScenarioEditorProp
             {importErrors.errors.length > 12 && <li className="muted">…and {importErrors.errors.length - 12} more</li>}
           </ul>
           <p className="muted">
-            Expected columns: <code>{INPUT_CSV_COLUMNS.join(", ")}</code>, one row per year. Tip: use Export CSV to get a
-            correctly formatted file.
+            Expected columns: <code>{INPUT_CSV_COLUMNS.join(", ")}</code>, one row per calendar year from 2027 (launch year 1) to
+            2036 (year 10). Tip: use Export CSV to get a correctly formatted file.
           </p>
         </Modal>
       )}

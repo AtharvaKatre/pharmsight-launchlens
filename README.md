@@ -115,7 +115,10 @@ Where the brief left something open, I assumed the following:
 
 1. **Percentages** are entered and stored on a 0–100 scale. Patient counts and prices must be zero
    or more.
-2. **Launch timing:** 2027 is year 1 of uptake.
+2. **Launch timing and horizon:** 2027 is launch year 1 and the horizon is fixed at ten calendar
+   years (2027–2036), as the brief specifies. The grid shows both clocks ("2027 / Y1"): calendar
+   years drive population, price and gross-to-net, and years since launch drive uptake. A later
+   launch can be modelled today by setting the early years' uptake to 0% and shifting the curve.
 3. **Population growth:** 1% a year is used only to *pre-fill* each year's prevalent population. After
    that every year's population is independently editable, so changing one year doesn't cascade.
 4. **Uptake:** "Y5+ 100%" means the Y5 value continues to 2036. The illustrative Downside uses the
@@ -159,6 +162,13 @@ Where the brief left something open, I assumed the following:
 - **Token storage:** the JWT is kept in `localStorage`, which is simple but readable by an XSS. An
   HttpOnly cookie with CSRF protection would be stronger. Tokens expire after 60 minutes and there
   are no refresh tokens.
+- **Fixed forecast horizon:** the engine is year-agnostic (`calculate_year` never looks at the
+  year), but the 2027–2036 range is enforced in validation, a database CHECK constraint, the seed
+  data and the UI. The next step would be a launch year per scenario, with uptake entered as a
+  Y1–Y10 curve and placed onto calendar years from that launch year, so "launch slips to 2028" is
+  one field rather than ten edits, while scenarios still compare on one calendar chart. Making the
+  window itself configurable would mean moving the bounds into settings and replacing the CHECK
+  constraint with a migration.
 - **Concurrent edits:** last write wins. There's no optimistic locking or edit history per scenario
   beyond saved versions.
 - **Snapshot storage:** each version stores the full workspace in JSONB. That's simple and fully

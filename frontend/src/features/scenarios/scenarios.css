@@ -195,6 +195,17 @@
   font-weight: 600;
 }
 
+.input-grid__year,
+.input-grid__launch-year {
+  display: block;
+}
+
+.input-grid__launch-year {
+  color: var(--faint);
+  font-size: 11px;
+  font-weight: 500;
+}
+
 .input-grid__corner,
 .input-grid__label {
   position: sticky;

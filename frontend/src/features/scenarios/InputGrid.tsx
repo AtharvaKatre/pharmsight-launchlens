@@ -30,9 +30,15 @@ export function InputGrid({ years, saved, errors, readOnly, onChange }: InputGri
             <th scope="col" className="input-grid__corner">
               Assumption
             </th>
-            {years.map((y) => (
+            {/* Two clocks: the calendar year (population, price, gross-to-net) and the year since
+                launch (uptake). Years are sorted and 2027 is launch year 1. */}
+            {years.map((y, col) => (
               <th scope="col" key={y.year} className="num">
-                {y.year}
+                <span className="input-grid__year">{y.year}</span>
+                <span className="input-grid__launch-year" aria-hidden="true" title={`Launch year ${col + 1}`}>
+                  Y{col + 1}
+                </span>
+                <span className="sr-only"> (launch year {col + 1})</span>
               </th>
             ))}
           </tr>

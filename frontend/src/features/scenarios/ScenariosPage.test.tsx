@@ -79,10 +79,14 @@ describe("ScenariosPage – input grid", () => {
     await renderPage();
 
     expect(screen.getAllByRole("textbox")).toHaveLength(90);
-    expect(screen.getAllByRole("columnheader").map((h) => h.textContent)).toEqual([
-      "Assumption",
-      ...BASE_YEARS.map((y) => String(y.year)),
-    ]);
+    // Each column shows the calendar year and the year since launch (2027 is Y1).
+    const headers = screen.getAllByRole("columnheader");
+    expect(headers).toHaveLength(11);
+    expect(headers[0]).toHaveTextContent("Assumption");
+    BASE_YEARS.forEach((y, i) => {
+      expect(screen.getByRole("columnheader", { name: `${y.year} (launch year ${i + 1})`})).toBe(headers[i + 1]);
+      expect(headers[i + 1]).toHaveTextContent(`${y.year}Y${i + 1}`);
+    });
     expect(cell("Prevalent patients", 2027)).toHaveValue("2,000,000");
     expect(cell("Diagnosed", 2027)).toHaveValue("60%");
     expect(cell("Uptake", 2029)).toHaveValue("55%");
