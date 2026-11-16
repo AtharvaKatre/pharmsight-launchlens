@@ -24,6 +24,29 @@ export function toPayloadValue(raw: string): string {
   return value.endsWith(".") ? value.slice(0, -1) : value;
 }
 
+/**
+ * Canonical form of a decimal string for comparison: formatting removed, leading zeros and
+ * trailing fractional zeros dropped ("2020000.00" -> "2020000", "060.50" -> "60.5"). Exact: it
+ * never goes through floating point. Text that isn't a number is returned normalized but as is.
+ */
+export function canonicalDecimal(raw: string): string {
+  const value = normalizeInput(raw);
+  if (!NUMBER_PATTERN.test(value)) return value;
+  const negative = value.startsWith("-");
+  const [intPart, fracPart = ""] = (negative ? value.slice(1) : value).split(".");
+  const int = intPart.replace(/^0+/, "") || "0";
+  const frac = fracPart.replace(/0+$/, "");
+  const result = frac ? `${int}.${frac}` : int;
+  return negative && result !== "0" ? `-${result}` : result;
+}
+
+/** True when two cell values are the same number, however they're written. */
+export function sameValue(a: string | undefined, b: string | undefined): boolean {
+  if (a === b) return true;
+  if (a === undefined || b === undefined) return false;
+  return canonicalDecimal(a) === canonicalDecimal(b);
+}
+
 export function toPayloadYear(year: YearInput): YearInput {
   const result = { ...year };
   for (const field of INPUT_FIELDS) result[field.key] = toPayloadValue(year[field.key]);

@@ -2,7 +2,7 @@ import { Fragment, useEffect, useRef, useState, type KeyboardEvent } from "react
 
 import type { InputField, YearInput } from "../../api/types";
 import { cellKey, formatFieldValue, INPUT_FIELDS, UNIT_LABEL, type FieldUnit } from "./fields";
-import { normalizeInput, validateValue } from "./validation";
+import { normalizeInput, sameValue, validateValue } from "./validation";
 
 interface InputGridProps {
   years: YearInput[];
@@ -65,7 +65,7 @@ export function InputGrid({ years, saved, errors, readOnly, onChange }: InputGri
                         <td key={key}>
                           <GridCell
                             value={y[field.key]}
-                            changed={y[field.key] !== saved[col]?.[field.key]}
+                            changed={!sameValue(y[field.key], saved[col]?.[field.key])}
                             unit={field.unit}
                             error={errors[key]}
                             readOnly={readOnly}

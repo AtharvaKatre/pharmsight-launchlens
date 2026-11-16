@@ -19,7 +19,7 @@ import { INPUT_CSV_COLUMNS, inputsToCsv, parseInputsCsv } from "./csvInputs";
 import { cellKey, cellLabel, INPUT_FIELDS } from "./fields";
 import { InputGrid } from "./InputGrid";
 import { ScenarioDialog, type ScenarioDialogValues } from "./ScenarioDialog";
-import { mapServerIssues, NO_SERVER_ERRORS, toPayloadYear, validateYears, type ServerErrors } from "./validation";
+import { mapServerIssues, NO_SERVER_ERRORS, sameValue, toPayloadYear, validateYears, type ServerErrors } from "./validation";
 
 interface ScenarioEditorProps {
   scenarioId: number;
@@ -164,8 +164,18 @@ export function ScenarioEditor({ scenarioId, onDirtyChange }: ScenarioEditorProp
       setImportErrors({ file: file.name, errors: parsed.errors });
       return;
     }
-    const changes = countChanges(parsed.years, detail.years);
-    setDraft(parsed.years);
+    // Spreadsheet apps rewrite numbers (Excel saves "2020000.00" as "2020000"). Where the imported
+    // value is the same number as the saved one, keep the saved text so nothing is rewritten.
+    const imported = parsed.years.map((year, i) => {
+      const saved = detail.years[i];
+      const merged = { ...year };
+      for (const field of INPUT_FIELDS) {
+        if (saved && sameValue(year[field.key], saved[field.key])) merged[field.key] = saved[field.key];
+      }
+      return merged;
+    });
+    const changes = countChanges(imported, detail.years);
+    setDraft(imported);
     setServerErrors(NO_SERVER_ERRORS);
     setSaveError(null);
     setSavedAt(null);
@@ -425,9 +435,10 @@ function GridErrorList({ errors }: { errors: Record<string, string> }) {
 
 function countChanges(draft: YearInput[], saved: YearInput[]): number {
   let count = 0;
+  // Numeric comparison: "2020000" and "2020000.00" are the same value, not a change.
   draft.forEach((year, i) => {
-    for (const key of Object.keys(year) as (keyof YearInput)[]) {
-      if (key !== "year" && year[key] !== saved[i]?.[key]) count++;
+    for (const field of INPUT_FIELDS) {
+      if (!sameValue(year[field.key], saved[i]?.[field.key])) count++;
     }
   });
   return count;

@@ -312,6 +312,29 @@ describe("ScenariosPage – CSV import and export", () => {
     expect(api.update).not.toHaveBeenCalled();
   });
 
+  it("ignores number formatting that Excel rewrites on save", async () => {
+    // Excel saves "2020000.00" as "2020000" and "2081208.02000000" as "2081208.02": same numbers.
+    const rows = parseCsv(inputsToCsv(BASE_YEARS));
+    // (Longer values stay as text in Excel, so they come back unchanged.)
+    expect(rows.slice(2, 6).map((r) => r[1])).toEqual(["2020000.00", "2040200.0000", "2060602.000000", "2081208.02000000"]);
+    rows.slice(2, 6).forEach((row, i) => (row[1] = ["2020000", "2040200", "2060602", "2081208.02"][i]));
+    rows[1][6] = "20"; // 2027 uptake: the one real change
+    api.update.mockImplementation(async (id, body: ScenarioUpdate) => ({ ...detail(STANDARD_SCENARIOS[0]), id, years: body.years }));
+    await renderPage();
+
+    await userEvent.upload(screen.getByLabelText("Import inputs CSV file"), csvFile(rows.map((r) => r.join(",")).join("\n")));
+
+    expect(await screen.findByText(/1 value differs from the saved inputs/)).toBeInTheDocument();
+    expect(cell("Prevalent patients", 2028)).not.toHaveClass("is-changed");
+    expect(cell("Uptake", 2027)).toHaveClass("is-changed");
+
+    // Unchanged values keep their saved text, so saving doesn't rewrite them.
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(api.update).toHaveBeenCalledOnce());
+    const sent = (api.update.mock.calls[0][1] as ScenarioUpdate).years;
+    expect(sent.map((y) => y.prevalent_patients)).toEqual(BASE_YEARS.map((y) => y.prevalent_patients));
+  });
+
   it("saves imported values exactly", async () => {
     api.update.mockImplementation(async (id, body: ScenarioUpdate) => ({ ...detail(STANDARD_SCENARIOS[0]), id, years: body.years }));
     await renderPage();

@@ -154,6 +154,8 @@ Where the brief left something open, I assumed the following:
     - Thousands separators, `$` and `%` are tolerated.
     - Any error rejects the whole file.
     - Imported values become *unsaved edits*, so they're reviewed before the user clicks Save.
+    - Values are compared as numbers, not text: Excel re-saving `2020000.00` as `2020000` isn't
+      counted as a change, and the saved value is kept.
 13. **Precision:** calculations use `Decimal` and are never rounded internally. The API sends numbers
     as decimal strings. Rounding happens only for display, and exports keep full precision.
 

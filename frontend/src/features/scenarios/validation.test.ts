@@ -1,7 +1,39 @@
 import { describe, expect, it } from "vitest";
 
 import { BASE_YEARS } from "../../test/fixtures";
-import { mapServerIssues, normalizeInput, toPayloadValue, toPayloadYear, validateValue, validateYears } from "./validation";
+import {
+  canonicalDecimal,
+  mapServerIssues,
+  normalizeInput,
+  sameValue,
+  toPayloadValue,
+  toPayloadYear,
+  validateValue,
+  validateYears,
+} from "./validation";
+
+describe("numeric comparison", () => {
+  it("canonicalizes decimal strings exactly", () => {
+    expect(canonicalDecimal("2020000.00")).toBe("2020000");
+    expect(canonicalDecimal("2081208.02000000")).toBe("2081208.02");
+    expect(canonicalDecimal("060.50")).toBe("60.5");
+    expect(canonicalDecimal("$10,000.")).toBe("10000");
+    expect(canonicalDecimal(".5")).toBe("0.5");
+    expect(canonicalDecimal("0.000")).toBe("0");
+    expect(canonicalDecimal("abc")).toBe("abc");
+  });
+
+  it("treats differently written equal numbers as the same, without floating point", () => {
+    expect(sameValue("2020000", "2020000.00")).toBe(true);
+    expect(sameValue("60%", "60.0")).toBe(true);
+    expect(sameValue("2187370.545368721802000000", "2187370.545368721802")).toBe(true);
+    // Beyond float precision but still different: must not be treated as equal.
+    expect(sameValue("2187370.545368721802", "2187370.545368721803")).toBe(false);
+    expect(sameValue("10", "100")).toBe(false);
+    expect(sameValue("", "0")).toBe(false);
+    expect(sameValue("1", undefined)).toBe(false);
+  });
+});
 
 describe("validateValue", () => {
   it("accepts valid numbers, including formatting people type", () => {
