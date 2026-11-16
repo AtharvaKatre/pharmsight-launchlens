@@ -48,7 +48,7 @@ export function InputGrid({ years, saved, errors, readOnly, onChange }: InputGri
             <Fragment key={group}>
               <tr className="input-grid__group">
                 <th scope="rowgroup" colSpan={years.length + 1}>
-                  {group}
+                  <span className="input-grid__group-label">{group}</span>
                 </th>
               </tr>
               {INPUT_FIELDS.filter((f) => f.group === group).map((field) => {

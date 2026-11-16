@@ -237,10 +237,10 @@
   font-weight: 500;
 }
 
+/* The group cell spans the full table width, so making the cell itself sticky has no effect.
+   The label inside it is sticky instead, so it stays pinned while the year columns scroll. */
 .input-grid__group th {
-  position: sticky;
-  left: 0;
-  padding: 7px 12px;
+  padding: 7px 0;
   background: #f3f4f8;
   color: var(--muted);
   font-size: 11px;
@@ -248,6 +248,13 @@
   letter-spacing: 0.06em;
   text-align: left;
   text-transform: uppercase;
+}
+
+.input-grid__group-label {
+  position: sticky;
+  left: 0;
+  display: inline-block;
+  padding: 0 12px;
 }
 
 .input-grid td {
