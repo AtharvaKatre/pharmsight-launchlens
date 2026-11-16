@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import type { ScenarioSummary, VersionSummary } from "../../api/types";
 import { formatDateTime } from "../../lib/format";
+import { editedSince, lastEditedAt } from "./changes";
 
 interface CurrentForecastCardProps {
   scenarios: ScenarioSummary[];
@@ -15,10 +16,9 @@ interface CurrentForecastCardProps {
  * action is clearly about the current scenarios and not about the version being viewed.
  */
 export function CurrentForecastCard({ scenarios, latest, canSave, onSave }: CurrentForecastCardProps) {
-  const lastEdited = scenarios.reduce<string | null>((max, s) => (max === null || s.updated_at > max ? s.updated_at : max), null);
-  // Only claim what timestamps prove: an edit after the latest version. (A deletion isn't detectable here.)
-  const editedSinceLatest =
-    latest !== undefined && lastEdited !== null && new Date(lastEdited).getTime() > new Date(latest.created_at).getTime();
+  const lastEdited = lastEditedAt(scenarios);
+  // Only claim what timestamps prove: an edit after the latest version.
+  const editedSinceLatest = latest !== undefined && editedSince(scenarios, latest);
 
   return (
     <section className="current-forecast" aria-labelledby="current-forecast-title">
@@ -36,7 +36,13 @@ export function CurrentForecastCard({ scenarios, latest, canSave, onSave }: Curr
           View on Dashboard
         </Link>
         {canSave && (
-          <button type="button" className="btn btn--primary btn--sm" onClick={onSave}>
+          <button
+            type="button"
+            className="btn btn--primary btn--sm"
+            onClick={onSave}
+            disabled={scenarios.length === 0}
+            title={scenarios.length === 0 ? "Create a scenario first: a version needs at least one" : undefined}
+          >
             Save as version
           </button>
         )}

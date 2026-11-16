@@ -79,7 +79,13 @@ export function VersionsPage() {
               : "A Forecaster hasn't saved a forecast version yet."}
           </p>
           {canEdit && (
-            <button type="button" className="btn btn--primary" onClick={() => setSaving(true)}>
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => setSaving(true)}
+              disabled={scenarios.length === 0}
+              title={scenarios.length === 0 ? "Create a scenario first: a version needs at least one" : undefined}
+            >
               <Icon name="check" size={16} /> Save current forecast as version
             </button>
           )}
@@ -98,7 +104,13 @@ export function VersionsPage() {
         </div>
       )}
 
-      {saving && <SaveVersionDialog onSaved={(created) => void handleSaved(created)} onClose={() => setSaving(false)} />}
+      {saving && (
+        <SaveVersionDialog
+          latest={versions ? (versions[0] ?? null) : undefined}
+          onSaved={(created) => void handleSaved(created)}
+          onClose={() => setSaving(false)}
+        />
+      )}
     </>
   );
 }

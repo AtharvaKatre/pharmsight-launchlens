@@ -67,6 +67,14 @@
 }
 
 /* ---------- Save dialog preview ---------- */
+.save-note {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--surface-muted);
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
 .save-preview {
   width: 100%;
   border-collapse: collapse;

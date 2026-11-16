@@ -143,8 +143,21 @@ describe("VersionsPage – history", () => {
     api.list.mockResolvedValue([]);
     renderVersions();
 
-    await userEvent.click(await screen.findByRole("button", { name: "Save current forecast as version" }));
-    expect(screen.getByRole("dialog", { name: "Save forecast version" })).toBeInTheDocument();
+    const save = await screen.findByRole("button", { name: "Save current forecast as version" });
+    await waitFor(() => expect(save).toBeEnabled()); // once the scenarios have loaded
+    await userEvent.click(save);
+    const dialog = screen.getByRole("dialog", { name: "Save forecast version" });
+    expect(dialog).not.toHaveTextContent("No scenario has been edited"); // nothing to compare with yet
+  });
+
+  it("doesn't offer an empty version when there are no scenarios", async () => {
+    api.list.mockResolvedValue([]);
+    vi.mocked(scenariosApi.list).mockResolvedValue([]);
+    renderVersions();
+
+    const save = await screen.findByRole("button", { name: "Save current forecast as version" });
+    await waitFor(() => expect(scenariosApi.list).toHaveBeenCalled());
+    expect(save).toBeDisabled();
   });
 });
 
@@ -164,12 +177,26 @@ describe("VersionsPage – current forecast", () => {
     expect(within(current).getByRole("button", { name: "Save as version" })).toBeInTheDocument();
   });
 
-  it("doesn't claim changes when nothing was edited after the latest version", async () => {
+  it("notes in the save dialog when nothing was edited after the latest version, but still allows saving", async () => {
     api.list.mockResolvedValue([summary(2, "After uptake review", "2026-11-15T09:00:00Z"), V1]);
     renderVersions();
     await screen.findByRole("heading", { name: "Version #2" });
-
     expect(screen.getByRole("region", { name: "Current forecast" })).not.toHaveTextContent("Edited since");
+
+    await userEvent.click(screen.getByRole("button", { name: "Save as version" }));
+    const dialog = screen.getByRole("dialog", { name: "Save forecast version" });
+    expect(within(dialog).getByRole("note")).toHaveTextContent("No scenario has been edited since version #2");
+    expect(within(dialog).getByRole("button", { name: "Save version" })).toBeEnabled();
+  });
+
+  it("disables saving when there are no scenarios", async () => {
+    vi.mocked(scenariosApi.list).mockResolvedValue([]);
+    renderVersions();
+    await screen.findByRole("heading", { name: "Version #2" });
+
+    const current = screen.getByRole("region", { name: "Current forecast" });
+    expect(current).toHaveTextContent("0 scenarios");
+    expect(within(current).getByRole("button", { name: "Save as version" })).toBeDisabled();
   });
 });
 
@@ -183,6 +210,7 @@ describe("VersionsPage – saving", () => {
     await userEvent.click(screen.getByRole("button", { name: "Save as version" }));
     const dialog = screen.getByRole("dialog", { name: "Save forecast version" });
     expect(dialog).toHaveTextContent("Freezes the current forecast: all 3 scenarios");
+    expect(within(dialog).queryByRole("note")).not.toBeInTheDocument(); // scenarios were edited after #2
     // Preview of exactly what is being saved: every scenario with its total net revenue.
     const preview = within(dialog).getByRole("table", { name: "Scenarios in this version" });
     await waitFor(() => expect(within(preview).getAllByRole("row")[1]).not.toHaveTextContent("…"));

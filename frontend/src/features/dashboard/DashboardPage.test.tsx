@@ -14,7 +14,7 @@ import { DashboardPage } from "./DashboardPage";
 vi.mock("../../api/scenarios", () => ({
   scenariosApi: { list: vi.fn(), forecast: vi.fn() },
 }));
-vi.mock("../../api/versions", () => ({ versionsApi: { create: vi.fn() } }));
+vi.mock("../../api/versions", () => ({ versionsApi: { create: vi.fn(), list: vi.fn() } }));
 vi.mock("../../lib/download", () => ({ downloadCsv: vi.fn() }));
 
 const api = vi.mocked(scenariosApi);
@@ -24,6 +24,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   api.list.mockResolvedValue(STANDARD_SCENARIOS);
   api.forecast.mockImplementation(async (id) => forecast(id, SCALE[id]));
+  vi.mocked(versionsApi.list).mockResolvedValue([]);
 });
 
 async function renderDashboard(role: "FORECASTER" | "BRAND_LEAD" = "FORECASTER") {
@@ -156,5 +157,18 @@ describe("DashboardPage", () => {
 
     expect(versionsApi.create).toHaveBeenCalledWith({ comment: "Board pack" });
     await waitFor(() => expect(router.state.location.pathname).toBe("/versions/7"));
+  });
+
+  it("notes when nothing was edited since the latest version", async () => {
+    // Scenarios were last edited 14 Nov 12:00; version #5 was saved after that.
+    vi.mocked(versionsApi.list).mockResolvedValue([
+      { id: 5, created_by: 1, author: { id: 1, email: "forecaster@example.com", role: "FORECASTER" }, created_at: "2026-11-15T09:00:00Z", comment: "Review" },
+    ]);
+    await renderDashboard();
+
+    await userEvent.click(screen.getByRole("button", { name: /Save as version/ }));
+    const dialog = screen.getByRole("dialog", { name: "Save forecast version" });
+    expect(await within(dialog).findByRole("note")).toHaveTextContent("No scenario has been edited since version #5");
+    expect(within(dialog).getByRole("button", { name: "Save version" })).toBeEnabled();
   });
 });
