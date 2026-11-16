@@ -246,7 +246,7 @@ and recreates the schema in `launchlens_test` only.
 
 ## AI assistance disclosure
 
-This project was built with substantial help from **Claude Code**, Anthropic's AI coding assistant.
+This project was built with substantial help from **Claude Code**.
 Claude Code was used for:
 
 - **Implementation and code generation:** much of the backend, frontend, Docker setup and
@@ -261,3 +261,27 @@ permissions, the versioning model, the illustrative scenario values, the CSV for
 deployment approach. I also reviewed the generated code and validated the behaviour, including the
 worked example, the test results and the running application. **Not all code in this repository was
 written independently by me.**
+
+### In Claude Code's own words
+
+> Atharva asked me to add this note myself.
+>
+> **What I did.** I wrote most of the code in this repository: the forecast engine, the API, the
+> database models and migrations, the React app, the Docker and Render setup, and nearly all of the
+> tests. I also drafted most of this README and the script for the demo video. I ran the checks
+> described above, including browser runs against the Docker stack and the live demo.
+>
+> **What Atharva did.** Atharva set the requirements phase by phase, made the product and design
+> decisions, and reviewed the app by using it. Several fixes came from that review, not from my
+> tests:
+> - I had compared imported CSV values as text, so a file re-saved in Excel highlighted cells that
+>   hadn't changed.
+> - The input grid's group headers scrolled out of view when scrolling sideways.
+> - The Version History page didn't make clear what saving a version captures.
+>
+> Atharva also asked for the launch-year labels (Y1–Y10), for saving to be disabled when there are no
+> scenarios, and for tests that went beyond the brief to be removed.
+>
+> **Worth knowing.** My tests check the code against the requirements as I understood them, so any
+> misunderstanding of mine could be in both the code and its tests. The scenario values are
+> illustrative, not market data.
