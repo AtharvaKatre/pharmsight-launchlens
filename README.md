@@ -59,7 +59,7 @@ next to `docker-compose.yml`:
 | Forecast engine: patients, gross and net revenue per year and scenario, unit-tested (including the worked check) | `backend/app/forecast/` |
 | Create, clone, rename and delete scenarios; Base, Upside and Downside | Scenarios page |
 | Compare scenarios | Dashboard: net revenue line chart (with table view) and KPI deltas against Base |
-| Save a version with who, when and a comment; past versions are read-only | **Version History** page |
+| Save a version with who, when and a comment; past versions are read-only | Dashboard → *Save as version*, or **Version History** → *Current forecast* → *Save as version* |
 | Patient funnel for any chosen year | Dashboard and saved versions |
 | CSV export: inputs (per scenario) and full results (all scenarios) | Scenarios → *Export CSV*; Dashboard and Versions → *Export results CSV* |
 | Two roles with access control enforced in the API | `backend/app/api/deps.py`, plus tests in `backend/tests/api/test_permissions.py` |
@@ -140,7 +140,9 @@ Where the brief left something open, I assumed the following:
 8. **Versions** snapshot the *whole workspace*: every scenario's name, description, ten years of
    inputs and calculated results, as currently saved. Unsaved grid edits aren't included. Snapshots
    are self-contained, so editing or deleting a scenario never changes history. The database itself
-   rejects updates and deletes on saved versions (a trigger).
+   rejects updates and deletes on saved versions (a trigger). In the UI, saving sits with the live
+   forecast (on the Dashboard, and on a "Current forecast" entry at the top of the version list),
+   never next to a past version, and the save dialog previews every scenario that will be included.
 9. **Comments** belong to saved versions. Both roles can comment; the brief requires it for Brand
    Leads.
 10. **A version comment** is required in the UI (the brief says a version stores a comment). The API

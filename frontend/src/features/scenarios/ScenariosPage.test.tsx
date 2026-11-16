@@ -220,7 +220,12 @@ describe("ScenariosPage – scenario actions", () => {
 
   it("clones the active scenario", async () => {
     const clone = summary(6, "Base (copy)");
-    api.clone.mockResolvedValue(detail(clone));
+    api.clone.mockImplementation(async () => {
+      // From now on the server knows the copy, so the follow-up reload and fetch find it.
+      api.list.mockResolvedValue([CUSTOM, ...STANDARD_SCENARIOS, clone]);
+      api.get.mockImplementation(async (id) => detail([...STANDARD_SCENARIOS, CUSTOM, clone].find((s) => s.id === id)!));
+      return detail(clone);
+    });
     await renderPage();
 
     await userEvent.click(screen.getByRole("button", { name: "Clone" }));
@@ -229,6 +234,7 @@ describe("ScenariosPage – scenario actions", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Create copy" }));
 
     expect(api.clone).toHaveBeenCalledWith(1, { name: "Base (copy)" });
+    expect(await screen.findByRole("heading", { level: 2, name: "Base (copy)" })).toBeInTheDocument();
   });
 
   it("renames using the saved inputs, not unsaved grid edits", async () => {

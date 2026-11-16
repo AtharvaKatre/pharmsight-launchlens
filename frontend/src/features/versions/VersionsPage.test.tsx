@@ -12,7 +12,7 @@ import { BASE_YEARS, forecast, STANDARD_SCENARIOS } from "../../test/fixtures";
 import { renderAsUser, TEST_USERS } from "../../test/render";
 import { VersionsPage } from "./VersionsPage";
 
-vi.mock("../../api/scenarios", () => ({ scenariosApi: { list: vi.fn() } }));
+vi.mock("../../api/scenarios", () => ({ scenariosApi: { list: vi.fn(), forecast: vi.fn() } }));
 vi.mock("../../api/versions", () => ({
   versionsApi: { list: vi.fn(), get: vi.fn(), create: vi.fn(), comments: vi.fn(), addComment: vi.fn() },
 }));
@@ -53,6 +53,7 @@ const EXISTING_COMMENT: VersionComment = {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(scenariosApi.list).mockResolvedValue(STANDARD_SCENARIOS);
+  vi.mocked(scenariosApi.forecast).mockImplementation(async (id) => forecast(id, id));
   api.list.mockResolvedValue([V2, V1]);
   api.get.mockImplementation(async (id) => detail(id === 2 ? V2 : V1));
   api.comments.mockImplementation(async (id) => (id === 2 ? [EXISTING_COMMENT] : []));
@@ -135,6 +136,40 @@ describe("VersionsPage – history", () => {
 
     expect(await screen.findByRole("heading", { name: "No versions saved yet" })).toBeInTheDocument();
     expect(screen.getByText("A Forecaster hasn't saved a forecast version yet.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Save/ })).not.toBeInTheDocument();
+  });
+
+  it("offers a Forecaster the first save from the empty state", async () => {
+    api.list.mockResolvedValue([]);
+    renderVersions();
+
+    await userEvent.click(await screen.findByRole("button", { name: "Save current forecast as version" }));
+    expect(screen.getByRole("dialog", { name: "Save forecast version" })).toBeInTheDocument();
+  });
+});
+
+describe("VersionsPage – current forecast", () => {
+  it("shows the live forecast above the saved versions, separate from the version being viewed", async () => {
+    renderVersions();
+    await screen.findByRole("heading", { name: "Version #2" });
+
+    // No save action in the page header, above the version being viewed.
+    const header = screen.getByRole("heading", { level: 1, name: "Version History" }).closest(".page-header") as HTMLElement;
+    expect(within(header).queryAllByRole("button")).toHaveLength(0);
+    const current = screen.getByRole("region", { name: "Current forecast" });
+    expect(current).toHaveTextContent("3 scenarios");
+    // Scenarios were last edited on 14 Nov, after version #2 (12 Nov).
+    expect(current).toHaveTextContent("Edited since version #2");
+    expect(within(current).getByRole("link", { name: "View on Dashboard" })).toHaveAttribute("href", "/dashboard");
+    expect(within(current).getByRole("button", { name: "Save as version" })).toBeInTheDocument();
+  });
+
+  it("doesn't claim changes when nothing was edited after the latest version", async () => {
+    api.list.mockResolvedValue([summary(2, "After uptake review", "2026-11-15T09:00:00Z"), V1]);
+    renderVersions();
+    await screen.findByRole("heading", { name: "Version #2" });
+
+    expect(screen.getByRole("region", { name: "Current forecast" })).not.toHaveTextContent("Edited since");
   });
 });
 
@@ -145,9 +180,14 @@ describe("VersionsPage – saving", () => {
     const { router } = renderVersions();
     await screen.findByRole("heading", { name: "Version #2" });
 
-    await userEvent.click(screen.getByRole("button", { name: "Save version" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save as version" }));
     const dialog = screen.getByRole("dialog", { name: "Save forecast version" });
-    expect(dialog).toHaveTextContent("Saves a read-only snapshot of all 3 scenarios");
+    expect(dialog).toHaveTextContent("Freezes the current forecast: all 3 scenarios");
+    // Preview of exactly what is being saved: every scenario with its total net revenue.
+    const preview = within(dialog).getByRole("table", { name: "Scenarios in this version" });
+    await waitFor(() => expect(within(preview).getAllByRole("row")[1]).not.toHaveTextContent("…"));
+    expect(within(preview).getAllByRole("rowheader").map((h) => h.textContent?.trim())).toEqual(["Base", "Upside", "Downside"]);
+    expect(within(preview).getByRole("columnheader", { name: "Net revenue 2027–2036" })).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole("button", { name: "Save version" }));
     expect(within(dialog).getByText("Describe what this version captures")).toBeInTheDocument();
     expect(api.create).not.toHaveBeenCalled();
@@ -166,7 +206,8 @@ describe("VersionsPage – saving", () => {
     renderVersions("BRAND_LEAD");
     await screen.findByRole("heading", { name: "Version #2" });
 
-    expect(screen.queryByRole("button", { name: "Save version" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Save/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Current forecast" })).toBeInTheDocument();
   });
 
   it("shows the API error if saving is refused", async () => {
@@ -174,7 +215,7 @@ describe("VersionsPage – saving", () => {
     renderVersions();
     await screen.findByRole("heading", { name: "Version #2" });
 
-    await userEvent.click(screen.getByRole("button", { name: "Save version" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save as version" }));
     const dialog = screen.getByRole("dialog", { name: "Save forecast version" });
     await userEvent.type(within(dialog).getByLabelText("Comment"), "try");
     await userEvent.click(within(dialog).getByRole("button", { name: "Save version" }));

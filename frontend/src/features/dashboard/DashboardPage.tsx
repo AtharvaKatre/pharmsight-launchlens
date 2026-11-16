@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { errorMessage } from "../../api/client";
 import { scenariosApi } from "../../api/scenarios";
 import type { YearResult } from "../../api/types";
+import { useAuth } from "../../auth/AuthContext";
 import { ErrorBanner } from "../../components/ErrorBanner";
+import { Icon } from "../../components/Icon";
 import { LoadingState } from "../../components/LoadingState";
 import { PageHeader } from "../../components/PageHeader";
 import { ScenarioBadge } from "../../components/ScenarioBadge";
@@ -19,6 +21,7 @@ import { downloadCsv } from "../../lib/download";
 import { scenarioKind } from "../../lib/scenarioKind";
 import { resultsToCsv } from "./csvResults";
 import { useWorkspace } from "../../workspace/WorkspaceContext";
+import { SaveVersionDialog } from "../versions/SaveVersionDialog";
 import { KpiCard } from "./KpiCard";
 import { PatientFunnel } from "./PatientFunnel";
 import { RevenueChart } from "./RevenueChart";
@@ -31,6 +34,9 @@ export function DashboardPage() {
   const [forecastError, setForecastError] = useState<string | null>(null);
   const [retryToken, setRetryToken] = useState(0);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [savingVersion, setSavingVersion] = useState(false);
+  const { canEdit } = useAuth();
+  const navigate = useNavigate();
 
   // Refetch whenever a scenario is added, removed or updated.
   const scenarioKey = scenarios.map((s) => `${s.id}@${s.updated_at}`).join(",");
@@ -112,11 +118,31 @@ export function DashboardPage() {
         title="Dashboard"
         subtitle="Forecast results across scenarios, calculated from the current saved inputs."
         actions={
-          <button type="button" className="btn btn--ghost" onClick={exportResults} disabled={forecastState !== "ready"}>
-            Export results CSV
-          </button>
+          <>
+            <button type="button" className="btn btn--ghost" onClick={exportResults} disabled={forecastState !== "ready"}>
+              Export results CSV
+            </button>
+            {canEdit && (
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => setSavingVersion(true)}
+                disabled={forecastState !== "ready"}
+                title="Freeze this forecast (all scenarios) as a read-only version"
+              >
+                <Icon name="check" size={16} /> Save as version
+              </button>
+            )}
+          </>
         }
       />
+      {savingVersion && (
+        <SaveVersionDialog
+          forecasts={forecasts}
+          onSaved={(created) => navigate(`/versions/${created.id}`)}
+          onClose={() => setSavingVersion(false)}
+        />
+      )}
 
       <div className="filter-row" role="group" aria-label="Dashboard filters">
         <label className="filter">

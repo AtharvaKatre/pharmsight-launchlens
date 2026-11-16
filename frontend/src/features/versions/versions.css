@@ -13,6 +13,88 @@
   padding: 14px 10px;
 }
 
+/* ---------- Current forecast ("now" at the top of the timeline) ---------- */
+.current-forecast {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 14px;
+  padding: 12px;
+  border: 1px dashed #c9cef5;
+  border-radius: 8px;
+  background: var(--accent-soft);
+}
+
+.current-forecast__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.current-forecast__row h3 {
+  font-size: 14px;
+}
+
+.chip--live {
+  height: 20px;
+  padding: 0 8px;
+  background: #e3f4ea;
+  color: var(--success);
+  font-size: 11px;
+}
+
+.current-forecast__meta {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.current-forecast__status {
+  color: var(--ink-2);
+  font-size: 12.5px;
+  font-weight: 550;
+}
+
+.current-forecast__actions a.btn {
+  text-decoration: none;
+}
+
+.current-forecast__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* ---------- Save dialog preview ---------- */
+.save-preview {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.save-preview th,
+.save-preview td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.save-preview thead th {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.save-preview tbody th {
+  font-weight: 550;
+}
+
+.save-preview .num {
+  text-align: right;
+}
+
 /* ---------- Version list ---------- */
 .version-list__title {
   padding: 0 8px 8px;

@@ -1,8 +1,9 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { scenariosApi } from "../../api/scenarios";
+import { versionsApi } from "../../api/versions";
 import { parseCsv } from "../../lib/csv";
 import { downloadCsv } from "../../lib/download";
 import { RESULT_CSV_COLUMNS } from "./csvResults";
@@ -13,6 +14,7 @@ import { DashboardPage } from "./DashboardPage";
 vi.mock("../../api/scenarios", () => ({
   scenariosApi: { list: vi.fn(), forecast: vi.fn() },
 }));
+vi.mock("../../api/versions", () => ({ versionsApi: { create: vi.fn() } }));
 vi.mock("../../lib/download", () => ({ downloadCsv: vi.fn() }));
 
 const api = vi.mocked(scenariosApi);
@@ -122,8 +124,37 @@ describe("DashboardPage", () => {
     expect(Number(rows[1][RESULT_CSV_COLUMNS.indexOf("net_revenue")])).toBe(28_800_000);
   });
 
-  it("is fully viewable by a Brand Lead", async () => {
+  it("is fully viewable by a Brand Lead, without the save action", async () => {
     await renderDashboard("BRAND_LEAD");
     expect(kpi(/Net revenue · 2036/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Save as version/ })).not.toBeInTheDocument();
+  });
+
+  it("lets a Forecaster save the forecast shown as a version, previewing the live results", async () => {
+    vi.mocked(versionsApi.create).mockResolvedValue({
+      id: 7,
+      created_by: 1,
+      author: { id: 1, email: "forecaster@example.com", role: "FORECASTER" },
+      created_at: "2026-11-16T10:00:00Z",
+      comment: "Board pack",
+      snapshot: { scenarios: [] },
+    });
+    const { router } = renderAsUser(<DashboardPage />, "FORECASTER");
+    await screen.findByRole("heading", { name: "Patient funnel" });
+
+    await userEvent.click(screen.getByRole("button", { name: /Save as version/ }));
+    const dialog = screen.getByRole("dialog", { name: "Save forecast version" });
+    const preview = within(dialog).getByRole("table", { name: "Scenarios in this version" });
+    // Uses the results already on screen (no extra requests): Upside is 1.5× Base, Downside 0.5×.
+    expect(api.forecast).toHaveBeenCalledTimes(3);
+    const totals = within(preview).getAllByRole("cell").map((c) => c.textContent);
+    expect(totals).toHaveLength(3);
+    expect(totals.every((t) => t?.startsWith("$"))).toBe(true);
+
+    await userEvent.type(within(dialog).getByLabelText("Comment"), "Board pack");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save version" }));
+
+    expect(versionsApi.create).toHaveBeenCalledWith({ comment: "Board pack" });
+    await waitFor(() => expect(router.state.location.pathname).toBe("/versions/7"));
   });
 });

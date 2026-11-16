@@ -219,7 +219,8 @@
 
 .funnel__stage {
   display: grid;
-  grid-template-columns: 150px minmax(60px, 1fr) 84px;
+  /* Label and bar give way before the numbers do, so values are never clipped in narrow panels. */
+  grid-template-columns: minmax(96px, 150px) minmax(40px, 1fr) minmax(84px, max-content);
   grid-template-areas:
     "label track value"
     "label track rate";
@@ -300,6 +301,13 @@
 
 @media (max-width: 1280px) {
   .dashboard__panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* A saved version shares its width with the version list, so stack its chart and funnel sooner. */
+@media (max-width: 1600px) {
+  .version-detail .dashboard__panels {
     grid-template-columns: 1fr;
   }
 }

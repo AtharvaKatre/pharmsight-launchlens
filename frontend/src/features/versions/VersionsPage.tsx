@@ -10,6 +10,7 @@ import { Icon } from "../../components/Icon";
 import { LoadingState } from "../../components/LoadingState";
 import { PageHeader } from "../../components/PageHeader";
 import { useWorkspace } from "../../workspace/WorkspaceContext";
+import { CurrentForecastCard } from "./CurrentForecastCard";
 import { SaveVersionDialog } from "./SaveVersionDialog";
 import { VersionDetailView } from "./VersionDetailView";
 import { VersionList } from "./VersionList";
@@ -46,8 +47,7 @@ export function VersionsPage() {
     if (selectedId === null && versions?.length) navigate(`/versions/${versions[0].id}`, { replace: true });
   }, [selectedId, versions, navigate]);
 
-  async function handleSave(comment: string) {
-    const created = await versionsApi.create({ comment });
+  async function handleSaved(created: VersionSummary) {
     setSaving(false);
     await load();
     navigate(`/versions/${created.id}`);
@@ -57,14 +57,7 @@ export function VersionsPage() {
     <>
       <PageHeader
         title="Version History"
-        subtitle="Saved, read-only snapshots of every scenario's inputs and calculated results."
-        actions={
-          canEdit && (
-            <button type="button" className="btn btn--primary" onClick={() => setSaving(true)}>
-              <Icon name="check" size={16} /> Save version
-            </button>
-          )
-        }
+        subtitle="Read-only snapshots of the whole forecast. Viewing a version never changes your current scenarios."
       />
 
       {error && (
@@ -82,15 +75,21 @@ export function VersionsPage() {
           <h2>No versions saved yet</h2>
           <p className="muted">
             {canEdit
-              ? "Save a version to record the current scenarios, their inputs and results, with a comment."
+              ? "Save a version to freeze the current forecast: every scenario's inputs and results, with a comment."
               : "A Forecaster hasn't saved a forecast version yet."}
           </p>
+          {canEdit && (
+            <button type="button" className="btn btn--primary" onClick={() => setSaving(true)}>
+              <Icon name="check" size={16} /> Save current forecast as version
+            </button>
+          )}
         </div>
       )}
 
       {versions && versions.length > 0 && (
         <div className="versions-layout">
           <aside className="card versions-layout__list">
+            <CurrentForecastCard scenarios={scenarios} latest={versions[0]} canSave={canEdit} onSave={() => setSaving(true)} />
             <VersionList versions={versions} selectedId={selectedId} onSelect={(id) => navigate(`/versions/${id}`)} />
           </aside>
           <div className="versions-layout__detail">
@@ -99,9 +98,7 @@ export function VersionsPage() {
         </div>
       )}
 
-      {saving && (
-        <SaveVersionDialog scenarioCount={scenarios.length} onSubmit={handleSave} onClose={() => setSaving(false)} />
-      )}
+      {saving && <SaveVersionDialog onSaved={(created) => void handleSaved(created)} onClose={() => setSaving(false)} />}
     </>
   );
 }

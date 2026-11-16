@@ -1,23 +1,47 @@
-import { useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 
 import { errorMessage } from "../../api/client";
+import { scenariosApi } from "../../api/scenarios";
+import type { VersionDetail, YearResult } from "../../api/types";
+import { versionsApi } from "../../api/versions";
 import { ErrorBanner } from "../../components/ErrorBanner";
 import { Modal } from "../../components/Modal";
+import { SeriesDot } from "../../components/ScenarioBadge";
+import { formatCurrencyCompact, toNumber } from "../../lib/format";
+import { useWorkspace } from "../../workspace/WorkspaceContext";
+import "./versions.css";
 
 const COMMENT_MAX = 2000;
 
 interface SaveVersionDialogProps {
-  scenarioCount: number;
-  onSubmit: (comment: string) => Promise<void>;
+  /** Live results if the caller already has them (the Dashboard); otherwise they're fetched for the preview. */
+  forecasts?: Map<number, YearResult[]>;
+  onSaved: (version: VersionDetail) => void;
   onClose: () => void;
 }
 
-export function SaveVersionDialog({ scenarioCount, onSubmit, onClose }: SaveVersionDialogProps) {
+/** Saves the *current* forecast (every scenario, as saved) as a new read-only version. */
+export function SaveVersionDialog({ forecasts: given, onSaved, onClose }: SaveVersionDialogProps) {
+  const { scenarios, colors } = useWorkspace();
   const fieldId = useId();
   const [comment, setComment] = useState("");
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [fetched, setFetched] = useState<Map<number, YearResult[]> | null>(null);
+  const forecasts = given ?? fetched;
+
+  // The preview is informational: if results can't be loaded, the list still shows the scenario names.
+  useEffect(() => {
+    if (given) return;
+    let cancelled = false;
+    Promise.all(scenarios.map((s) => scenariosApi.forecast(s.id)))
+      .then((results) => !cancelled && setFetched(new Map(results.map((r) => [r.scenario_id, r.years]))))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [given, scenarios]);
 
   async function handleSubmit(event?: FormEvent) {
     event?.preventDefault();
@@ -27,12 +51,15 @@ export function SaveVersionDialog({ scenarioCount, onSubmit, onClose }: SaveVers
     setError(null);
     setBusy(true);
     try {
-      await onSubmit(trimmed);
+      onSaved(await versionsApi.create({ comment: trimmed }));
     } catch (err) {
       setError(errorMessage(err));
       setBusy(false);
     }
   }
+
+  const sample = forecasts ? [...forecasts.values()][0] : undefined;
+  const totalLabel = sample?.length ? `Net revenue ${sample[0].year}–${sample[sample.length - 1].year}` : "Net revenue, all years";
 
   return (
     <Modal
@@ -53,9 +80,34 @@ export function SaveVersionDialog({ scenarioCount, onSubmit, onClose }: SaveVers
       <form id="save-version-form" className="stack" onSubmit={handleSubmit}>
         {error && <ErrorBanner>{error}</ErrorBanner>}
         <p className="modal__text">
-          Saves a read-only snapshot of all {scenarioCount} {scenarioCount === 1 ? "scenario" : "scenarios"}, with their
-          inputs and calculated results as currently saved. Unsaved edits in the input grid are not included.
+          Freezes the current forecast: all {scenarios.length} {scenarios.length === 1 ? "scenario" : "scenarios"}, with
+          their saved inputs and calculated results. The version is read-only; you can keep editing scenarios afterwards.
         </p>
+        <table className="save-preview" aria-label="Scenarios in this version">
+          <thead>
+            <tr>
+              <th scope="col">Scenario</th>
+              <th scope="col" className="num">
+                {totalLabel}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {scenarios.map((s) => {
+              const years = forecasts?.get(s.id);
+              return (
+                <tr key={s.id}>
+                  <th scope="row">
+                    {colors.get(s.id) && <SeriesDot color={colors.get(s.id)!} />} {s.name}
+                  </th>
+                  <td className="num">
+                    {years ? formatCurrencyCompact(years.reduce((sum, y) => sum + toNumber(y.net_revenue), 0)) : "…"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
         <div className="field">
           <label className="field__label" htmlFor={`${fieldId}-comment`}>
             Comment
